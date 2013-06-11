@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.2.3
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -148,6 +148,7 @@ sed -i	-e 's|/run/mongodb|%{?_scl_root}/run/mongodb|g' \
 sed -i	-e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
 	-e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
 	-e 's|/usr/bin/mongo|%{_bindir}/mongo|g' \
+	-e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
 	%{daemon}.service
 
 # spurious permissions
@@ -206,9 +207,9 @@ scons install \
 rm -f %{buildroot}%{_libdir}/libmongoclient.a
 rm -f %{buildroot}%{_prefix}/lib/libmongoclient.a
 
-mkdir -p %{buildroot}%{_sharedstatedir}/%{pkg_name}
-mkdir -p %{buildroot}%{_localstatedir}/log/%{pkg_name}
-mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
+mkdir -p %{buildroot}%{?_scl_root}/var/lib/%{pkg_name}
+mkdir -p %{buildroot}/var/log/%{?scl_prefix}%{pkg_name}
+mkdir -p %{buildroot}%{?_scl_root}/var/run/%{pkg_name}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
 mkdir -p %{buildroot}/lib/systemd/system
@@ -221,7 +222,7 @@ install -p -D -m 644 %{daemon}.sysconf %{buildroot}%{_sysconfdir}/sysconfig/%{da
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
 
-mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
+mkdir -p %{buildroot}%{?_scl_root}/var/run/%{name}
 
 # In mongodb 2.2.2 we have duplicate headers
 #  Everything should be in %{_includedir}/mongo
@@ -244,7 +245,7 @@ rm -rf %{buildroot}
 %pre server
 getent group %{pkg_name} >/dev/null || groupadd -r %{pkg_name}
 getent passwd %{pkg_name} >/dev/null || \
-useradd -r -g %{pkg_name} -u 184 -d %{_sharedstatedir}/%{pkg_name} -s /sbin/nologin \
+useradd -r -g %{pkg_name} -u 184 -d %{?_scl_root}/var/lib/%{pkg_name} -s /sbin/nologin \
 -c "MongoDB Database Server" %{pkg_name}
 exit 0
 
@@ -296,9 +297,9 @@ exit 0
 %{_bindir}/mongos
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
-%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/lib/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) /var/log/%{?scl_prefix}%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/run/%{pkg_name}
 %config(noreplace) /etc/logrotate.d/%{?scl_prefix}%{name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
@@ -312,6 +313,9 @@ exit 0
 %{_includedir}
 
 %changelog
+* Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
+- Fix some SCL paths
+
 * Sat Apr 20 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-5
 - Packaged as Software collection package
 
