@@ -87,6 +87,7 @@ functionality).
 %package lib
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
+%{?scl:Requires:%scl_runtime}
 
 %description lib
 This package provides the shared library for the MongoDB client.
@@ -96,6 +97,7 @@ Summary:        MongoDB header files
 Group:          Development/Libraries
 Requires:       %{name}-lib = %{version}-%{release}
 Requires:       boost-devel
+%{?scl:Requires:%scl_runtime}
 
 %description devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
@@ -105,6 +107,8 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires:       %{name} = %{version}-%{release}
+Requires(post):	policycoreutils
+%{?scl:Requires:%scl_runtime}
 
 %description server
 This package provides the mongo server software, mongo sharding server
@@ -250,6 +254,10 @@ useradd -r -g %{pkg_name} -u 184 -d %{?_scl_root}/var/lib/%{pkg_name} -s /sbin/n
 exit 0
 
 %post server
+restorecon -R %{_scl_root} >/dev/null 2>&1 || :
+restorecon -R /var/log/%{?scl_prefix}%{pkg_name} >/dev/null 2>&1 || :
+restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
+
 %systemd_post %{?scl_prefix}mongod.service
 
 
@@ -315,6 +323,7 @@ exit 0
 %changelog
 * Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
 - Fix some SCL paths
+- Run restorecon in post scriptlet to work-around #961791
 
 * Sat Apr 20 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-5
 - Packaged as Software collection package
