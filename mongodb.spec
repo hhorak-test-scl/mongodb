@@ -1,3 +1,4 @@
+
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
 
@@ -5,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.2.3
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -20,6 +21,7 @@ Source3:        %{pkg_name}.conf
 Source4:        %{daemon}.sysconf
 Source5:        %{pkg_name}-tmpfile
 Source6:        %{daemon}.service
+Source7:        scl-service
 Patch1:         mongodb-2.2.0-no-term.patch
 ##Patch 5 - https://jira.mongodb.org/browse/SERVER-6686
 Patch5:         mongodb-2.2.0-fix-xtime.patch
@@ -132,7 +134,7 @@ software, default configuration files, and init scripts.
 sed -e "s|__SCL_LIBDIR__|%{_libdir}|g" %PATCH11 | patch -p1 -b --suffix .debug
 
 # copy source files, because we want adjust paths
-cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} .
+cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} %{SOURCE7} .
 
 sed -i  -e "s|/var/log/mongodb/|/var/log/%{?scl_prefix}mongodb/|g" \
         -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
@@ -151,7 +153,7 @@ sed -i	-e 's|/run/mongodb|%{?_scl_root}/run/mongodb|g' \
 
 sed -i	-e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
 	-e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
-	-e 's|/usr/bin/mongo|%{_bindir}/mongo|g' \
+	-e 's|/usr/bin/|%{_bindir}/|g' \
 	-e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
 	%{daemon}.service
 
@@ -222,6 +224,7 @@ install -p -D -m 644 %{daemon}.service %{buildroot}/lib/systemd/system/%{?scl_pr
 install -p -D -m 644 %{pkg_name}.logrotate %{buildroot}/etc/logrotate.d/%{?scl_prefix}%{name}
 install -p -D -m 644 %{pkg_name}.conf %{buildroot}%{_sysconfdir}/mongodb.conf
 install -p -D -m 644 %{daemon}.sysconf %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
+install -p -D -m 755 scl-service %{buildroot}%{_bindir}scl-service
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
@@ -303,6 +306,7 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 %defattr(-,root,root,-)
 %{_bindir}/mongod
 %{_bindir}/mongos
+%{_bindir}scl-service
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
 %dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/lib/%{pkg_name}
@@ -321,6 +325,9 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 %{_includedir}
 
 %changelog
+* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-7
+- Package scl-service to be able to launch daemon correctly
+
 * Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
 - Fix some SCL paths
 - Run restorecon in post scriptlet to work-around #961791
@@ -437,7 +444,7 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 * Mon Jan 16 2012 Nathaniel McCallum <nathaniel@natemccallum.com> - 2.0.2-2
 - Add pkg-config enablement patch
 
-* Thu Jan 14 2012 Nathaniel McCallum <nathaniel@natemccallum.com> - 2.0.2-1
+* Sat Jan 14 2012 Nathaniel McCallum <nathaniel@natemccallum.com> - 2.0.2-1
 - Update to 2.0.2
 - Add new files (mongotop and bsondump manpage)
 - Update mongodb-src-r1.8.2-js.patch => mongodb-src-r2.0.2-js.patch
