@@ -6,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.2.3
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -224,7 +224,7 @@ install -p -D -m 644 %{daemon}.service %{buildroot}/lib/systemd/system/%{?scl_pr
 install -p -D -m 644 %{pkg_name}.logrotate %{buildroot}/etc/logrotate.d/%{?scl_prefix}%{name}
 install -p -D -m 644 %{pkg_name}.conf %{buildroot}%{_sysconfdir}/mongodb.conf
 install -p -D -m 644 %{daemon}.sysconf %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
-install -p -D -m 755 scl-service %{buildroot}%{_bindir}scl-service
+install -p -D -m 755 scl-service %{buildroot}%{_bindir}/scl-service
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
@@ -306,7 +306,7 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 %defattr(-,root,root,-)
 %{_bindir}/mongod
 %{_bindir}/mongos
-%{_bindir}scl-service
+%{_bindir}/scl-service
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
 %dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/lib/%{pkg_name}
@@ -325,7 +325,7 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 %{_includedir}
 
 %changelog
-* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-7
+* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-8
 - Package scl-service to be able to launch daemon correctly
 
 * Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
