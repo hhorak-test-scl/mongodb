@@ -6,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.2.3
-Release:        8%{?dist}
+Release:        9%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -109,7 +109,6 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires:       %{name} = %{version}-%{release}
-Requires(post):	policycoreutils
 %{?scl:Requires:%scl_runtime}
 
 %description server
@@ -257,10 +256,6 @@ useradd -r -g %{pkg_name} -u 184 -d %{?_scl_root}/var/lib/%{pkg_name} -s /sbin/n
 exit 0
 
 %post server
-restorecon -R %{_scl_root} >/dev/null 2>&1 || :
-restorecon -R /var/log/%{?scl_prefix}%{pkg_name} >/dev/null 2>&1 || :
-restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
-
 %systemd_post %{?scl_prefix}mongod.service
 
 
@@ -325,8 +320,9 @@ restorecon /etc/logrotate.d/%{?scl_prefix}%{name} >/dev/null 2>&1 || :
 %{_includedir}
 
 %changelog
-* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-8
+* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-9
 - Package scl-service to be able to launch daemon correctly
+- Remove restorecon calls, we rather run load_policy in -runtime
 
 * Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
 - Fix some SCL paths
