@@ -1,7 +1,7 @@
-diff -ur mongodb-src-r2.2.0.orig/SConstruct mongodb-src-r2.2.0/SConstruct
---- mongodb-src-r2.2.0.orig/SConstruct	2012-09-28 16:48:16.755503308 -0500
-+++ mongodb-src-r2.2.0/SConstruct	2012-09-28 16:51:19.261374860 -0500
-@@ -249,7 +249,7 @@
+diff -Nur mongodb-src-r2.4.4.orig/SConstruct mongodb-src-r2.4.4/SConstruct
+--- mongodb-src-r2.4.4.orig/SConstruct	2013-06-16 20:57:58.272022055 +0200
++++ mongodb-src-r2.4.4/SConstruct	2013-06-28 20:37:15.266916910 +0200
+@@ -246,7 +246,7 @@
  
  printLocalInfo()
  
@@ -10,7 +10,7 @@ diff -ur mongodb-src-r2.2.0.orig/SConstruct mongodb-src-r2.2.0/SConstruct
  
  onlyServer = len( COMMAND_LINE_TARGETS ) == 0 or ( len( COMMAND_LINE_TARGETS ) == 1 and str( COMMAND_LINE_TARGETS[0] ) in [ "mongod" , "mongos" , "test" ] )
  nix = False
-@@ -790,6 +790,28 @@
+@@ -805,6 +805,28 @@
              print( "c++ compiler not installed!" )
              Exit(1)
  

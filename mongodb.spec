@@ -1,12 +1,11 @@
-
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
 
-%global         daemon mongod
+%global daemon mongod
 
 Name:           %{?scl_prefix}mongodb
-Version:        2.2.3
-Release:        9%{?dist}
+Version:        2.4.6
+Release:        1%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -16,32 +15,32 @@ License:        AGPLv3 and zlib and ASL 2.0
 URL:            http://www.mongodb.org
 
 Source0:        http://fastdl.mongodb.org/src/%{pkg_name}-src-r%{version}.tar.gz
+Source1:        %{pkg_name}.init
 Source2:        %{pkg_name}.logrotate
 Source3:        %{pkg_name}.conf
 Source4:        %{daemon}.sysconf
 Source5:        %{pkg_name}-tmpfile
 Source6:        %{daemon}.service
-Source7:        scl-service
-Patch1:         mongodb-2.2.0-no-term.patch
-##Patch 5 - https://jira.mongodb.org/browse/SERVER-6686
-Patch5:         mongodb-2.2.0-fix-xtime.patch
-%if 0%{?el6} == 0
-##Patch 6 - https://jira.mongodb.org/browse/SERVER-4314
-Patch6:         mongodb-2.2.0-boost-filesystem3.patch
-%endif
-##Patch 7 - make it possible to use system libraries
-Patch7:         mongodb-2.2.0-use-system-version.patch
-##Patch 8 - make it possible to build shared libraries
-Patch8:         mongodb-2.2.0-shared-library.patch
-##Patch 9 - https://jira.mongodb.org/browse/SERVER-5575
-Patch9:         mongodb-2.2.0-full-flag.patch
-##Patch 10 - https://bugzilla.redhat.com/show_bug.cgi?id=927536
-##Patch 10 - https://jira.mongodb.org/browse/SERVER-9124
-Patch10:        mongodb-2.2.3-CVE-2013-1892-avoid-raw-pointers.patch
-Patch11:	mongodb-debug.patch
+Patch1:         mongodb-2.4.5-no-term.patch
+##Patch 2 - make it possible to use system libraries
+Patch2:         mongodb-2.4.5-use-system-version.patch
+##Patch 5 - https://jira.mongodb.org/browse/SERVER-9210
+Patch5:         mongodb-2.4.5-boost-fix.patch
+##Patch 6 - https://github.com/mongodb/mongo/commit/1d42a534e0eb1e9ac868c0234495c0333d57d7c1
+Patch6:         mongodb-2.4.5-boost-size-fix.patch
+##Patch 7 - https://bugzilla.redhat.com/show_bug.cgi?id=958014
+## Need to work on getting this properly patched upstream
+Patch7:         mongodb-2.4.5-pass-flags.patch
+##Patch 8 - Compile with GCC 4.8
+Patch8:         mongodb-2.4.5-gcc48.patch
+##Patch 10 - Support atomics on ARM
+Patch10:        mongodb-2.4.5-atomics.patch
+##From: Robie Basak <robie.basak@canonical.com>
+##  Use a signed char to store BSONType enumerations
+##Patch 11 https://jira.mongodb.org/browse/SERVER-9680
+Patch11:        mongodb-2.4.5-signed-char-for-BSONType-enumerations.patch
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
+Requires:       %{?scl_prefix}v8
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
@@ -51,17 +50,13 @@ BuildRequires:  %{?scl_prefix}v8-devel
 BuildRequires:  readline-devel
 BuildRequires:  libpcap-devel
 BuildRequires:  %{?scl_prefix}snappy-devel
+# provides tcmalloc
 BuildRequires:  %{?scl_prefix}gperftools-devel
+# FIXME this is no more in the Fedora spec file
 BuildRequires:  %{?scl_prefix}libunwind-devel
-
-Requires(post): systemd-units
-Requires(preun): systemd-units
-
-Requires(pre):  shadow-utils
-
-Requires(postun): systemd-units
-
-Requires:       %{name}-lib = %{version}-%{release}
+%if 0%{?rhel} >= 7
+BuildRequires:  systemd
+%endif
 
 # Mongodb must run on a little-endian CPU (see bug #630898)
 ExcludeArch:    ppc ppc64 %{sparc} s390 s390x
@@ -86,29 +81,42 @@ A key goal of MongoDB is to bridge the gap between key/value stores (which are
 fast and highly scalable) and traditional RDBMS systems (which are deep in
 functionality).
 
-%package lib
+%package -n lib%{pkg_name}
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
 %{?scl:Requires:%scl_runtime}
 
-%description lib
+%description -n lib%{pkg_name}
 This package provides the shared library for the MongoDB client.
 
-%package devel
+%package -n lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
-Requires:       %{name}-lib = %{version}-%{release}
+Requires:       lib%{pkg_name} = %{version}-%{release}
 Requires:       boost-devel
+Provides:       mongodb-devel = %{version}-%{release}
+Obsoletes:      mongodb-devel < 2.4
 %{?scl:Requires:%scl_runtime}
 
-%description devel
+%description -n lib%{pkg_name}-devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
 a high-performance, open source, schema-free document-oriented database.
 
 %package server
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
-Requires:       %{name} = %{version}-%{release}
+Requires(pre):  shadow-utils
+Requires:       %{?scl_prefix}v8
+%if 0%{?rhel} >= 7
+#FIXME systemd-unit
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
+%else
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(postun): initscripts
+%endif
 %{?scl:Requires:%scl_runtime}
 
 %description server
@@ -119,21 +127,19 @@ software, default configuration files, and init scripts.
 %prep
 %setup -q -n mongodb-src-r%{version}
 %patch1 -p1
+%patch2 -p1
 %patch5 -p1
-%if 0%{?el6} == 0
 %patch6 -p1
-%endif
 %patch7 -p1
 %patch8 -p1
-%ifarch %ix86
-%patch9 -p1
-%endif
-%patch10 -p1
+%patch10 -p1 -b .atomics
+%patch11 -p1 -b .type
 
-sed -e "s|__SCL_LIBDIR__|%{_libdir}|g" %PATCH11 | patch -p1 -b --suffix .debug
+#FIXME
+#sed -e "s|__SCL_LIBDIR__|%{_libdir}|g" %PATCH11 | patch -p1 -b --suffix .debug
 
 # copy source files, because we want adjust paths
-cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} %{SOURCE7} .
+cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
 sed -i  -e "s|/var/log/mongodb/|/var/log/%{?scl_prefix}mongodb/|g" \
         -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
@@ -145,7 +151,7 @@ sed -i	-e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
 	%{pkg_name}.conf
 
 sed -i	-e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
-	%{daemon}.sysconf        
+	%{daemon}.sysconf
 
 sed -i	-e 's|/run/mongodb|%{?_scl_root}/run/mongodb|g' \
 	%{pkg_name}-tmpfile
@@ -162,87 +168,100 @@ chmod -x README
 # wrong end-of-file encoding
 sed -i 's/\r//' README
 
+# Put lib dir in correct place
+# https://jira.mongodb.org/browse/SERVER-10049
+sed -i -e "s@\$INSTALL_DIR/lib@\$INSTALL_DIR/%{_lib}@g" src/SConscript.client
+
 %build
 # NOTE: Build flags must be EXACTLY the same in the install step!
 # If you fail to do this, mongodb will be built twice...
 %{?scl:scl enable %{scl} - << "EOF"}
-export SCONS_LIB_DIR=%{_libdir}
-scons \
-	%{?_smp_mflags} \
-	--sharedclient \
-	--prefix=%{buildroot}%{_prefix} \
-	--extrapath=%{_prefix} \
-	--extrapathdyn=%{_prefix} \
-	--nostrip \
-	--ssl \
-	--usev8 \
-	--use-system-all \
-	--full
-#	--use-system-pcre=USE-SYSTEM-PCRE \
-#	--use-system-boost=USE-SYSTEM-BOOST \
-#	--libpath=%{_libdir} \
-#	--cpppath=%{_includedir} \
-
+#FIXME
+echo "XXXXX _libdir %{_libdir}"
+echo "XXXXX _root_libdir %{_root_libdir}"
+echo "XXXXX _prefix %{_prefix}"
+echo "XXXXX buildroot %{buildroot}"
+echo "XXXXX file %{buildroot}"
+printf "XXXXX "; file %{buildroot}
+#export SCONS_LIB_DIR=%{_libdir}
+export LIBPATH="%{_libdir}"
+echo "XXXXX BEGIN env"
+env
+echo "XXXXX END env"
+echo "XXXXX BEGIN ls -al %{_libdir}"
+ls -al %{_libdir}
+echo "XXXXX END ls -al %{_libdir}"
+echo "XXXXX BEGIN ls -al %{_root_libdir}"
+ls -al %{_root_libdir}
+echo "XXXXX END ls -al %{_root_libdir}"
+# see add_option() calls in SConstruct for options
+echo "XXXXX BEGIN strace scons"
+strace scons \
+        %{?_smp_mflags} \
+        --sharedclient \
+        --use-system-all \
+        --prefix=%{buildroot}%{_prefix} \
+        --extrapath=%{_prefix} \
+        --usev8 \
+        --nostrip \
+        --ssl \
+        --full \
+        --debug=findlibs \
+        --d
+#        --libpath=%{_libdir} \
+echo "XXXXX END strace scons"
 %{?scl:EOF}
 
 %install
-rm -rf %{buildroot}
+#FIXME should not be needed any more
+#rm -rf %{buildroot}
 # NOTE: Install flags must be EXACTLY the same in the build step!
 # If you fail to do this, mongodb will be built twice...
 %{?scl:scl enable %{scl} - << "EOF"}
-export SCONS_LIB_DIR=%{_libdir}
+#FIXME
+#export SCONS_LIB_DIR=%{_libdir}
 scons install \
-	%{?_smp_mflags} \
-	--sharedclient \
-	--prefix=%{buildroot}%{_prefix} \
-	--extrapath=%{_prefix} \
-	--extrapathdyn=%{_prefix} \
-	--nostrip \
-	--ssl \
-	--usev8 \
-	--use-system-all \
-	--full
-#	--use-system-pcre=USE-SYSTEM-PCRE \
-#	--use-system-boost=USE-SYSTEM-BOOST \
-#	--libpath=%{_libdir} \
-#	--cpppath=%{_includedir} \
-
+        %{?_smp_mflags} \
+        --sharedclient \
+        --use-system-all \
+        --prefix=%{buildroot}%{_prefix} \
+        --extrapath=%{_prefix} \
+        --usev8 \
+        --nostrip \
+        --ssl \
+        --full \
+        --debug=findlibs \
+        --d
+#        --libpath=%{_libdir} \
 %{?scl:EOF}
-
 rm -f %{buildroot}%{_libdir}/libmongoclient.a
-rm -f %{buildroot}%{_prefix}/lib/libmongoclient.a
+rm -f %{buildroot}%{_libdir}/../lib/libmongoclient.a
 
-mkdir -p %{buildroot}%{?_scl_root}/var/lib/%{pkg_name}
-mkdir -p %{buildroot}/var/log/%{?scl_prefix}%{pkg_name}
-mkdir -p %{buildroot}%{?_scl_root}/var/run/%{pkg_name}
+# TODO EPEL 4 & 5 expands to %{_prefix}/com, otherwise to /var/lib
+#mkdir -p %{buildroot}%{_sharedstatedir}/%{pkg_name}
+mkdir -p %{buildroot}%{_localstatedir}/lib/%{pkg_name}
+mkdir -p %{buildroot}%{_localstatedir}/log/%{?scl_prefix}%{pkg_name}
+mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
-mkdir -p %{buildroot}/lib/systemd/system
-install -p -D -m 644 %{pkg_name}-tmpfile %{buildroot}/usr/lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
-install -p -D -m 644 %{daemon}.service %{buildroot}/lib/systemd/system/%{?scl_prefix}%{daemon}.service
-install -p -D -m 644 %{pkg_name}.logrotate %{buildroot}/etc/logrotate.d/%{?scl_prefix}%{name}
-install -p -D -m 644 %{pkg_name}.conf %{buildroot}%{_sysconfdir}/mongodb.conf
-install -p -D -m 644 %{daemon}.sysconf %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
+%if 0%{?rhel} >= 7
+mkdir -p %{buildroot}%{_unitdir}
+install -p -D -m 644 %{SOURCE5} %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
+install -p -D -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
+%else
+install -p -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
+%endif
+install -p -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
+install -p -D -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/mongodb.conf
+install -p -D -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
+#FIXME wrapper nad scl-enable
 install -p -D -m 755 scl-service %{buildroot}%{_bindir}/scl-service
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
 
-mkdir -p %{buildroot}%{?_scl_root}/var/run/%{name}
-
-# In mongodb 2.2.2 we have duplicate headers
-#  Everything should be in %{_includedir}/mongo
-#  but it is almost all duplicated in %{_includedir}
-#  which could potentially conflict
-#  or cause problems.
-mkdir -p %{buildroot}/%{pkg_name}-hold
-mv %{buildroot}/%{_includedir}/mongo %{buildroot}/%{pkg_name}-hold/mongo
-rm -rf %{buildroot}/%{_includedir}/*
-mv %{buildroot}/%{pkg_name}-hold/mongo %{buildroot}/%{_includedir}/mongo
-rm -rf %{buildroot}/%{pkg_name}-hold
-
-%clean
-rm -rf %{buildroot}
+#FIXME mongodb or mongodb24
+mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 
 %post -p /sbin/ldconfig
 
@@ -251,24 +270,50 @@ rm -rf %{buildroot}
 %pre server
 getent group %{pkg_name} >/dev/null || groupadd -r %{pkg_name}
 getent passwd %{pkg_name} >/dev/null || \
-useradd -r -g %{pkg_name} -u 184 -d %{?_scl_root}/var/lib/%{pkg_name} -s /sbin/nologin \
+# TODO _sharedstatedir
+useradd -r -g %{pkg_name} -u 184 -d %{_localstatedir}/lib/%{pkg_name} -s /sbin/nologin \
 -c "MongoDB Database Server" %{pkg_name}
 exit 0
 
 %post server
-%systemd_post %{?scl_prefix}mongod.service
+%if 0%{?rhel} >= 7
+  # https://fedoraproject.org/wiki/Packaging:ScriptletSnippets#Systemd
+  %tmpfiles_create %{?scl_prefix}mongodb.conf
+  # daemon-reload
+  %systemd_postun
+%else
+  /sbin/chkconfig --add %{daemon}
+%endif
 
 
 %preun server
-%systemd_preun %{?scl_prefix}mongod.service
+if [ $1 = 0 ] ; then
+%if 0%{?rhel} >= 7
+  # --no-reload disable; stop
+  %systemd_preun %{?scl_prefix}%{daemon}.service
+%else
+  /sbin/service %{?scl_prefix}%{daemon} stop >/dev/null 2>&1
+  /sbin/chkconfig --del %{?scl_prefix}%{daemon}
+%endif
+fi
 
 
 %postun server
-%systemd_postun_with_restart %{?scl_prefix}mongod.service
+%if 0%{?rhel} >= 7
+  # daemon-reload
+  %systemd_postun
+%endif
+if [ "$1" -ge "1" ] ; then
+%if 0%{?rhel} >= 7
+  # try-restart
+  %systemd_postun_with_restart %{?scl_prefix}%{daemon}.service
+%else
+  /sbin/service %{?scl_prefix}%{daemon} condrestart >/dev/null 2>&1 || :
+%endif
+fi
 
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/bsondump
 %{_bindir}/mongo
 %{_bindir}/mongodump
@@ -278,58 +323,108 @@ exit 0
 %{_bindir}/mongooplog
 %{_bindir}/mongoperf
 %{_bindir}/mongorestore
-%{_bindir}/mongostat
 %{_bindir}/mongosniff
+%{_bindir}/mongostat
 %{_bindir}/mongotop
 
+%{_mandir}/man1/bsondump.1*
 %{_mandir}/man1/mongo.1*
 %{_mandir}/man1/mongodump.1*
 %{_mandir}/man1/mongoexport.1*
 %{_mandir}/man1/mongofiles.1*
 %{_mandir}/man1/mongoimport.1*
+%{_mandir}/man1/mongooplog.1*
+%{_mandir}/man1/mongoperf.1*
+%{_mandir}/man1/mongorestore.1*
 %{_mandir}/man1/mongosniff.1*
 %{_mandir}/man1/mongostat.1*
-%{_mandir}/man1/mongorestore.1*
-%{_mandir}/man1/bsondump.1*
+%{_mandir}/man1/mongotop.1*
 
-%files lib
-%defattr(-,root,root,-)
+%files -n lib%{pkg_name}
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
 %{_libdir}/libmongoclient.so
 
 %files server
-%defattr(-,root,root,-)
 %{_bindir}/mongod
 %{_bindir}/mongos
-%{_bindir}/scl-service
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
-%dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/lib/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) /var/log/%{?scl_prefix}%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{?_scl_root}/var/run/%{pkg_name}
-%config(noreplace) /etc/logrotate.d/%{?scl_prefix}%{name}
+%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
+%config(noreplace) %{_sysconfdir}/logrotate.d/%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
-/lib/systemd/system/*.service
-/usr/lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
+%if 0%{?fedora} >= 15
+%{_unitdir}/*.service
+%{_libdir}/../lib/tmpfiles.d/mongodb.conf
+%else
+%{_initddir}/%{daemon}
+%endif
 
-%{_mandir}/man1/mongod.1*
-
-%files devel
-%defattr(-,root,root,-)
+%files -n lib%{pkg_name}-devel
 %{_includedir}
 
 %changelog
-* Wed Jun 12 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-9
-- Package scl-service to be able to launch daemon correctly
-- Remove restorecon calls, we rather run load_policy in -runtime
+* Wed Aug 21 2013 Troy Dawson <tdawson@redhat.com> - 2.4.6-1
+- Updated to 2.4.6
+- Added Requires: v8  (#971595)
 
-* Tue Jun 11 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-6
-- Fix some SCL paths
-- Run restorecon in post scriptlet to work-around #961791
+* Sun Jul 28 2013 Petr Machata <pmachata@redhat.com> - 2.4.5-6
+- Rebuild for boost 1.54.0
 
-* Sat Apr 20 2013 Honza Horak <hhorak@redhat.com> - 2.2.3-5
-- Packaged as Software collection package
+* Sat Jul 27 2013 pmachata@redhat.com - 2.4.5-5
+- Rebuild for boost 1.54.0
+
+* Fri Jul 12 2013 Troy Dawson <tdawson@redhat.com> - 2.4.5-4
+- Added Provides: mongodb-devel to libmongodb-devel
+
+* Fri Jul 12 2013 Troy Dawson <tdawson@redhat.com> - 2.4.5-3
+- Removed hardening section.  Currently doesn't work with 2.4.x
+  Wasn't really being applied when we thought it was.
+- Cleaned up RHEL5 spec leftovers
+
+* Thu Jul 11 2013 David Marlin <dmarlin@redhat.com> - 2.4.5-2
+- Updated arm patches to work with 2.4.x
+
+* Mon Jul 08 2013 Troy Dawson <tdawson@redhat.com> - 2.4.5-1
+- Update to version 2.4.5 to fix CVE-2013-4650
+- Patch3 fixed upstream - https://jira.mongodb.org/browse/SERVER-5575
+- Patch4 fixed upstream - https://jira.mongodb.org/browse/SERVER-6514
+- Put lib dir in correct place
+- no longer have to remove duplicate headers
+
+* Sun Jul 07 2013 Johan Hedin <johan.o.hedin@gmail.com> - 2.4.4-4
+- Added patch to make mongodb compile with gcc 4.8
+
+* Wed Jul 03 2013 Johan Hedin <johan.o.hedin@gmail.com> - 2.4.4-3
+- Added missing daemon name to the preun script for the server
+- Fixed init script so that it does not kill the server on shutdown
+- Renamed mongodb-devel to libmongdb-devel
+- Dependency cleanup between the sub packages
+- Moved Requires for the server to the server sub package
+- Using %%{_unitdir} macro for where to put systemd unit files
+- Fixed rpmlint warnings regarding %% in comments and mixed tabs/spaces
+- Run systemd-tmpfiles --create mongodb.conf in post server
+
+* Mon Jul 01 2013 Troy Dawson <tdawson@redhat.com> - 2.4.4-2
+- Turn on hardened build (#958014)
+- Apply patch to accept env flags
+
+* Sun Jun 30 2013 Johan Hedin <johan.o.hedin@gmail.com> - 2.4.4-1
+- Bumped version up to 2.4.4
+- Rebased the old 2.2 patches that are still needed to 2.4.4
+- Added some new patches to build 2.4.4 properly
+
+* Sat May 04 2013 David Marlin <dmarlin@redhat.com> - 2.2.4-2
+- Updated patch to work on both ARMv5 and ARMv7 (#921226)
+
+* Thu May 02 2013 Troy Dawson <tdawson@redhat.com> - 2.2.4-1
+- Bumped version up to 2.2.4
+- Refreshed all patches to 2.2.4
+
+* Fri Apr 26 2013 David Marlin <dmarlin@redhat.com> - 2.2.3-5
+- Patch to build on ARM (#921226)
 
 * Wed Mar 27 2013 Troy Dawson <tdawson@redhat.com> - 2.2.3-4
 - Fix for CVE-2013-1892
@@ -370,7 +465,7 @@ exit 0
 
 * Tue Oct 02 2012 Troy Dawson <tdawson@redhat.com> - 2.2.0-5
 - shared libraries patch
-- Fix up minor %files issues
+- Fix up minor %%files issues
 
 * Fri Sep 28 2012 Troy Dawson <tdawson@redhat.com> - 2.2.0-4
 - Fix spec files problems
