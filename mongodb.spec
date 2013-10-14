@@ -21,6 +21,7 @@ Source3:        %{pkg_name}.conf
 Source4:        %{daemon}.sysconf
 Source5:        %{pkg_name}-tmpfile
 Source6:        %{daemon}.service
+Source7:        scl-service
 Patch1:         mongodb-2.4.5-no-term.patch
 ##Patch 2 - make it possible to use system libraries
 Patch2:         mongodb-2.4.5-use-system-version.patch
@@ -39,6 +40,7 @@ Patch10:        mongodb-2.4.5-atomics.patch
 ##  Use a signed char to store BSONType enumerations
 ##Patch 11 https://jira.mongodb.org/browse/SERVER-9680
 Patch11:        mongodb-2.4.5-signed-char-for-BSONType-enumerations.patch
+Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
 Requires:       %{?scl_prefix}v8
 BuildRequires:  python-devel
@@ -134,6 +136,7 @@ software, default configuration files, and init scripts.
 %patch8 -p1
 %patch10 -p1 -b .atomics
 %patch11 -p1 -b .type
+%patch12 -p1
 
 #FIXME
 #sed -e "s|__SCL_LIBDIR__|%{_libdir}|g" %PATCH11 | patch -p1 -b --suffix .debug
@@ -176,27 +179,8 @@ sed -i -e "s@\$INSTALL_DIR/lib@\$INSTALL_DIR/%{_lib}@g" src/SConscript.client
 # NOTE: Build flags must be EXACTLY the same in the install step!
 # If you fail to do this, mongodb will be built twice...
 %{?scl:scl enable %{scl} - << "EOF"}
-#FIXME
-echo "XXXXX _libdir %{_libdir}"
-echo "XXXXX _root_libdir %{_root_libdir}"
-echo "XXXXX _prefix %{_prefix}"
-echo "XXXXX buildroot %{buildroot}"
-echo "XXXXX file %{buildroot}"
-printf "XXXXX "; file %{buildroot}
-#export SCONS_LIB_DIR=%{_libdir}
-export LIBPATH="%{_libdir}"
-echo "XXXXX BEGIN env"
-env
-echo "XXXXX END env"
-echo "XXXXX BEGIN ls -al %{_libdir}"
-ls -al %{_libdir}
-echo "XXXXX END ls -al %{_libdir}"
-echo "XXXXX BEGIN ls -al %{_root_libdir}"
-ls -al %{_root_libdir}
-echo "XXXXX END ls -al %{_root_libdir}"
 # see add_option() calls in SConstruct for options
-echo "XXXXX BEGIN strace scons"
-strace scons \
+scons \
         %{?_smp_mflags} \
         --sharedclient \
         --use-system-all \
@@ -208,8 +192,6 @@ strace scons \
         --full \
         --debug=findlibs \
         --d
-#        --libpath=%{_libdir} \
-echo "XXXXX END strace scons"
 %{?scl:EOF}
 
 %install
@@ -254,18 +236,18 @@ install -p -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
 install -p -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 install -p -D -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/mongodb.conf
 install -p -D -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
-#FIXME wrapper nad scl-enable
-install -p -D -m 755 scl-service %{buildroot}%{_bindir}/scl-service
+# scl-enable wrapper
+install -p -D -m 755 %{SOURCE7} %{buildroot}%{_bindir}/scl-service
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
 
-#FIXME mongodb or mongodb24
-mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 
 %post -p /sbin/ldconfig
 
+
 %postun -p /sbin/ldconfig
+
 
 %pre server
 getent group %{pkg_name} >/dev/null || groupadd -r %{pkg_name}
@@ -274,6 +256,7 @@ getent passwd %{pkg_name} >/dev/null || \
 useradd -r -g %{pkg_name} -u 184 -d %{_localstatedir}/lib/%{pkg_name} -s /sbin/nologin \
 -c "MongoDB Database Server" %{pkg_name}
 exit 0
+
 
 %post server
 %if 0%{?rhel} >= 7
@@ -349,15 +332,19 @@ fi
 %{_bindir}/mongos
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
-%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{pkg_name}
+# TODO
+#%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{?scl_prefix}%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
-%config(noreplace) %{_sysconfdir}/logrotate.d/%{pkg_name}
+%config(noreplace) %{_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
-%if 0%{?fedora} >= 15
+%if 0%{?rhel} >= 7
 %{_unitdir}/*.service
-%{_libdir}/../lib/tmpfiles.d/mongodb.conf
+%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
+# TODO needed until the behaviour of this wrapper is not in upstream
+%{_bindir}/scl-service
 %else
 %{_initddir}/%{daemon}
 %endif
@@ -366,6 +353,9 @@ fi
 %{_includedir}
 
 %changelog
+* Mon Oct 14 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-1
+- Modified for SCL (software collection) mongodb24
+
 * Wed Aug 21 2013 Troy Dawson <tdawson@redhat.com> - 2.4.6-1
 - Updated to 2.4.6
 - Added Requires: v8  (#971595)
