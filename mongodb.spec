@@ -54,7 +54,7 @@ BuildRequires:  libpcap-devel
 BuildRequires:  %{?scl_prefix}snappy-devel
 # provides tcmalloc
 BuildRequires:  %{?scl_prefix}gperftools-devel
-# FIXME this is no more in the Fedora spec file
+# TODO this is no more in the Fedora spec file
 BuildRequires:  %{?scl_prefix}libunwind-devel
 %if 0%{?rhel} >= 7
 BuildRequires:  systemd
@@ -110,7 +110,6 @@ Group:          Applications/Databases
 Requires(pre):  shadow-utils
 Requires:       %{?scl_prefix}v8
 %if 0%{?rhel} >= 7
-#FIXME systemd-unit
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
@@ -137,9 +136,6 @@ software, default configuration files, and init scripts.
 %patch10 -p1 -b .atomics
 %patch11 -p1 -b .type
 %patch12 -p1
-
-#FIXME
-#sed -e "s|__SCL_LIBDIR__|%{_libdir}|g" %PATCH11 | patch -p1 -b --suffix .debug
 
 # copy source files, because we want adjust paths
 cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
@@ -195,13 +191,9 @@ scons \
 %{?scl:EOF}
 
 %install
-#FIXME should not be needed any more
-#rm -rf %{buildroot}
 # NOTE: Install flags must be EXACTLY the same in the build step!
 # If you fail to do this, mongodb will be built twice...
 %{?scl:scl enable %{scl} - << "EOF"}
-#FIXME
-#export SCONS_LIB_DIR=%{_libdir}
 scons install \
         %{?_smp_mflags} \
         --sharedclient \
