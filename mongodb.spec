@@ -55,7 +55,7 @@ BuildRequires:  %{?scl_prefix}snappy-devel
 # provides tcmalloc
 BuildRequires:  %{?scl_prefix}gperftools-devel
 # TODO this is no more in the Fedora spec file
-BuildRequires:  %{?scl_prefix}libunwind-devel
+#BuildRequires:  %{?scl_prefix}libunwind-devel
 %if 0%{?rhel} >= 7
 BuildRequires:  systemd
 %endif
