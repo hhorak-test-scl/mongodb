@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# This is a wrapper for 'scl enable' call, that accepts arguments given by
+# systemd service file, which doesn't allow to use arguments as we need.
+# It simply gets the first argument as a list of collection names (separated
+# by whitespace character) and will pass the rest of arguments to scl call
+# as the command.
+
+if [ $# -lt 3 ] ; then
+        echo "Usage: `basename $0` collection_list command arg1 arg2 ... argN"
+        exit 1
+fi
+
+# Store collections list
+COLLECTIONS=$1
+shift
+
+exec /usr/bin/scl enable $COLLECTIONS "$*"
+
+
