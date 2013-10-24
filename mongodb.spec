@@ -230,14 +230,14 @@ mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_unitdir}
 install -p -D -m 644 %{SOURCE5} %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
 install -p -D -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
+# scl-enable wrapper
+install -p -D -m 755 %{SOURCE7} %{buildroot}%{_bindir}/scl-service
 %else
 install -p -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
 %endif
 install -p -D -m 644 %{SOURCE2} %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 install -p -D -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/mongodb.conf
 install -p -D -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
-# scl-enable wrapper
-install -p -D -m 755 %{SOURCE7} %{buildroot}%{_bindir}/scl-service
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
