@@ -138,28 +138,36 @@ software, default configuration files, and init scripts.
 %patch12 -p1
 
 # copy source files, because we want adjust paths
-cp %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
+cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
-sed -i  -e "s|/var/log/mongodb/|/var/log/%{?scl_prefix}mongodb/|g" \
-        -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
-	%{pkg_name}.logrotate
+sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/%{?scl_prefix}mongodb/|g" \
+      -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
+      %{pkg_name}.logrotate
 
-sed -i	-e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
-	-e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-	-e 's|/var/log/mongodb|/var/log/%{?scl_prefix}mongodb|g' \
-	%{pkg_name}.conf
+sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
+      -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/%{?scl_prefix}mongodb|g' \
+      %{pkg_name}.conf
 
-sed -i	-e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
-	%{daemon}.sysconf
+sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
+      %{daemon}.sysconf
 
-sed -i	-e 's|/run/mongodb|%{?_scl_root}/run/mongodb|g' \
-	%{pkg_name}-tmpfile
+sed -i -e 's|/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      %{pkg_name}-tmpfile
 
-sed -i	-e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-	-e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
-	-e 's|/usr/bin/|%{_bindir}/|g' \
-	-e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-	%{daemon}.service
+sed -i -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      -e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
+      -e 's|/usr/bin/|%{_bindir}/|g' \
+      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+      %{daemon}.service
+
+sed -i -r -e 's|/usr/bin/|%{_bindir}/|g' \
+      -e 's|(/var/run/mongodb/)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/mongodb/)|%{?_scl_root}\1|g' \
+      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}/\1|g' \
+      -e 's|/etc/(sysconfig/)|%{?_sysconfdir}/\1|g' \
+      -e 's|(/var/lock/)|%{?_scl_root}/\1|g' \
+      %{pkg_name}.init
 
 # spurious permissions
 chmod -x README
@@ -225,7 +233,7 @@ install -p -D -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.
 %else
 install -p -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
 %endif
-install -p -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
+install -p -D -m 644 %{SOURCE2} %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 install -p -D -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/mongodb.conf
 install -p -D -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
 # scl-enable wrapper
@@ -257,7 +265,7 @@ exit 0
   # daemon-reload
   %systemd_postun
 %else
-  /sbin/chkconfig --add %{daemon}
+  /sbin/chkconfig --add %{?scl_prefix}%{daemon}
 %endif
 
 
@@ -329,7 +337,7 @@ fi
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{?scl_prefix}%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
-%config(noreplace) %{_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
+%config(noreplace) %{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
 %if 0%{?rhel} >= 7
@@ -338,7 +346,7 @@ fi
 # TODO needed until the behaviour of this wrapper is not in upstream
 %{_bindir}/scl-service
 %else
-%{_initddir}/%{daemon}
+%{_initddir}/%{?scl_prefix}%{daemon}
 %endif
 
 %files -n lib%{pkg_name}-devel
