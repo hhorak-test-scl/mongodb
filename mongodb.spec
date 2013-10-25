@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.6
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -140,34 +140,34 @@ software, default configuration files, and init scripts.
 # copy source files, because we want adjust paths
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
-sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/%{?scl_prefix}mongodb/|g" \
-      -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
-      %{pkg_name}.logrotate
-
-sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
-      -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/%{?scl_prefix}mongodb|g' \
-      %{pkg_name}.conf
-
-sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
-      %{daemon}.sysconf
-
-sed -i -e 's|/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      %{pkg_name}-tmpfile
-
-sed -i -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
-      -e 's|/usr/bin/|%{_bindir}/|g' \
-      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-      %{daemon}.service
-
 sed -i -r -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|(/var/run/mongodb/)|%{?_scl_root}\1|g' \
       -e 's|(/var/log/mongodb/)|%{?_scl_root}\1|g' \
       -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}/\1|g' \
       -e 's|/etc/(sysconfig/)|%{?_sysconfdir}/\1|g' \
       -e 's|(/var/lock/)|%{?_scl_root}/\1|g' \
-      %{pkg_name}.init
+      "$(basename %{SOURCE1})"
+
+sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/%{?scl_prefix}mongodb/|g" \
+      -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
+      "$(basename %{SOURCE2})"
+
+sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
+      -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/%{?scl_prefix}mongodb|g' \
+      "$(basename %{SOURCE3})"
+
+sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
+      "$(basename %{SOURCE4})"
+
+sed -i -e 's|/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      "$(basename %{SOURCE5})"
+
+sed -i -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+      -e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
+      -e 's|/usr/bin/|%{_bindir}/|g' \
+      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+      "$(basename %{SOURCE6})"
 
 # spurious permissions
 chmod -x README
@@ -228,16 +228,16 @@ mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
 %if 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
-install -p -D -m 644 %{SOURCE5} %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
-install -p -D -m 644 %{SOURCE6} %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
+install -p -D -m 644 "$(basename %{SOURCE5})" %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
+install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
 # scl-enable wrapper
-install -p -D -m 755 %{SOURCE7} %{buildroot}%{_bindir}/scl-service
+install -p -D -m 755 "$(basename %{SOURCE7})" %{buildroot}%{_bindir}/scl-service
 %else
-install -p -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
+install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
 %endif
-install -p -D -m 644 %{SOURCE2} %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
-install -p -D -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/mongodb.conf
-install -p -D -m 644 %{SOURCE4} %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
+install -p -D -m 644 "$(basename %{SOURCE2})" %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
+install -p -D -m 644 "$(basename %{SOURCE3})" %{buildroot}%{_sysconfdir}/mongodb.conf
+install -p -D -m 644 "$(basename %{SOURCE4})" %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
@@ -353,6 +353,10 @@ fi
 %{_includedir}
 
 %changelog
+* Fri Oct 25 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-2
+- make sysconf options being respected
+- fix sourceX files installation in %install
+
 * Mon Oct 14 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-1
 - Modified for SCL (software collection) mongodb24
 
