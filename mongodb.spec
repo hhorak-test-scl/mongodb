@@ -355,7 +355,7 @@ fi
 %changelog
 * Fri Oct 25 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-2
 - make sysconf options being respected
-- fix sourceX files installation in %install
+- fix sourceX files installation in % install
 
 * Mon Oct 14 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-1
 - Modified for SCL (software collection) mongodb24
