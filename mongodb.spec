@@ -231,7 +231,7 @@ mkdir -p %{buildroot}%{_unitdir}
 install -p -D -m 644 "$(basename %{SOURCE5})" %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
 install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
 # scl-enable wrapper
-install -p -D -m 755 "$(basename %{SOURCE7})" %{buildroot}%{_bindir}/scl-service
+install -p -D -m 755 "%{SOURCE7}" %{buildroot}%{_bindir}/scl-service
 %else
 install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
 %endif
