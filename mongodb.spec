@@ -148,13 +148,13 @@ sed -i -r -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|(/var/lock/)|%{?_scl_root}/\1|g' \
       "$(basename %{SOURCE1})"
 
-sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/%{?scl_prefix}mongodb/|g" \
+sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/mongodb/|g" \
       -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
       "$(basename %{SOURCE2})"
 
 sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
       -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/%{?scl_prefix}mongodb|g' \
+      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/mongodb|g' \
       "$(basename %{SOURCE3})"
 
 sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
@@ -222,7 +222,7 @@ rm -f %{buildroot}%{_libdir}/../lib/libmongoclient.a
 # TODO EPEL 4 & 5 expands to %{_prefix}/com, otherwise to /var/lib
 #mkdir -p %{buildroot}%{_sharedstatedir}/%{pkg_name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{pkg_name}
-mkdir -p %{buildroot}%{_localstatedir}/log/%{?scl_prefix}%{pkg_name}
+mkdir -p %{buildroot}%{_localstatedir}/log/%{pkg_name}
 mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
@@ -335,7 +335,7 @@ fi
 # TODO
 #%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{?scl_prefix}%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
 %config(noreplace) %{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
