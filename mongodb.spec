@@ -83,15 +83,18 @@ A key goal of MongoDB is to bridge the gap between key/value stores (which are
 fast and highly scalable) and traditional RDBMS systems (which are deep in
 functionality).
 
-%package -n lib%{pkg_name}
+%package lib
+#%package -n lib%{pkg_name}
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}
+%description lib
+#%description -n lib%{pkg_name}
 This package provides the shared library for the MongoDB client.
 
-%package -n lib%{pkg_name}-devel
+%package devel
+#%package -n lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
 Requires:       lib%{pkg_name} = %{version}-%{release}
@@ -100,7 +103,8 @@ Provides:       mongodb-devel = %{version}-%{release}
 Obsoletes:      mongodb-devel < 2.4
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}-devel
+%description devel
+#%description -n lib%{pkg_name}-devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
 a high-performance, open source, schema-free document-oriented database.
 
