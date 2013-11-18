@@ -144,31 +144,31 @@ software, default configuration files, and init scripts.
 # copy source files, because we want adjust paths
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
-sed -i -r -e 's|/usr/bin/|%{_bindir}/|g' \
-      -e 's|(/var/run/mongodb/)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/mongodb/)|%{?_scl_root}\1|g' \
-      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}/\1|g' \
-      -e 's|/etc/(sysconfig/)|%{?_sysconfdir}/\1|g' \
-      -e 's|(/var/lock/)|%{?_scl_root}/\1|g' \
+sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
+      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}\1|g' \
+      -e 's|/etc/(sysconfig)|%{?_sysconfdir}\1|g' \
+      -e 's|(/var/lock)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE1})"
 
-sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/mongodb/|g" \
-      -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
+sed -i -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
+      -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
       "$(basename %{SOURCE2})"
 
-sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
-      -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/mongodb|g' \
+sed -i -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE3})"
 
-sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
+sed -i -e 's|/etc/(mongodb.conf)|%{_sysconfdir}\1|g' \
       "$(basename %{SOURCE4})"
 
-sed -i -e 's|/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+sed -i -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
       "$(basename %{SOURCE5})"
 
-sed -i -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
+sed -i -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}\1|g' \
       -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
       "$(basename %{SOURCE6})"
@@ -237,7 +237,7 @@ install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_pre
 # scl-enable wrapper
 install -p -D -m 755 "%{SOURCE7}" %{buildroot}%{_bindir}/scl-service
 %else
-install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
+install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
 install -p -D -m 644 "$(basename %{SOURCE2})" %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 install -p -D -m 644 "$(basename %{SOURCE3})" %{buildroot}%{_sysconfdir}/mongodb.conf
