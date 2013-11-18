@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.6
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -327,7 +327,7 @@ fi
 %{_mandir}/man1/mongostat.1*
 %{_mandir}/man1/mongotop.1*
 
-%files -n lib%{pkg_name}
+%files lib
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
 %{_libdir}/libmongoclient.so
 
@@ -353,10 +353,16 @@ fi
 %{_initddir}/%{?scl_prefix}%{daemon}
 %endif
 
-%files -n lib%{pkg_name}-devel
+%files devel
 %{_includedir}
 
 %changelog
+* Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
+- fix double --quiet option in init script; fix bad sed pattern
+- fix libmongodb bad prefix
+- fix scl-service installation
+- log path mismatches fixed
+
 * Fri Oct 25 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-2
 - make sysconf options being respected
 - fix sourceX files installation in % install
