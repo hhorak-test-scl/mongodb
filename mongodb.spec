@@ -345,7 +345,7 @@ fi
 # TODO needed until the behaviour of this wrapper is not in upstream
 %{_bindir}/scl-service
 %else
-%{_initddir}/%{?scl_prefix}%{daemon}
+%{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
 
 %files devel
