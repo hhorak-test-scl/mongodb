@@ -90,10 +90,10 @@ This package provides the shared library for the MongoDB client.
 %package -n %{scl}-lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
-Requires:       %{scl_name}-lib%{pkg_name} = %{version}-%{release}
+Requires:       %{?scl_prefix}lib%{pkg_name} = %{version}-%{release}
 Requires:       boost-devel
-Provides:       %{scl_name}-%{pkg_name}-devel = %{version}-%{release}
-Obsoletes:      %{scl_name}-%{pkg_name}-devel < 2.6
+Provides:       %{?scl_prefix}%{pkg_name}-devel = %{version}-%{release}
+Obsoletes:      %{?scl_prefix}%{pkg_name}-devel < 2.6
 %{?scl:Requires:%scl_runtime}
 
 %description -n %{scl}-lib%{pkg_name}-devel
