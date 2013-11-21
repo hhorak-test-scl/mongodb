@@ -79,24 +79,24 @@ A key goal of MongoDB is to bridge the gap between key/value stores (which are
 fast and highly scalable) and traditional RDBMS systems (which are deep in
 functionality).
 
-%package -n lib%{pkg_name}
+%package -n %{scl}-lib%{pkg_name}
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}
+%description -n %{scl}-lib%{pkg_name}
 This package provides the shared library for the MongoDB client.
 
-%package -n lib%{pkg_name}-devel
+%package -n %{scl}-lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
-Requires:       lib%{pkg_name} = %{version}-%{release}
+Requires:       %{scl}-lib%{pkg_name} = %{version}-%{release}
 Requires:       boost-devel
-Provides:       mongodb-devel = %{version}-%{release}
-Obsoletes:      mongodb-devel < 2.4
+Provides:       %{scl}-%{pkg_name}-devel = %{version}-%{release}
+Obsoletes:      %{scl}-%{pkg_name}-devel < 2.6
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}-devel
+%description -n %{scl}-lib%{pkg_name}-devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
 a high-performance, open source, schema-free document-oriented database.
 
@@ -324,12 +324,12 @@ fi
 %{_mandir}/man1/mongostat.1*
 %{_mandir}/man1/mongotop.1*
 
-%files -n lib%{pkg_name}
+%files -n %{scl}-lib%{pkg_name}
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
 %{_libdir}/libmongoclient.so
 
 # usually contains ln -s /usr/lib/<???> lib<???>.so
-%files -n lib%{pkg_name}-devel
+%files -n %{scl}-lib%{pkg_name}-devel
 %{_includedir}
 
 %files server
