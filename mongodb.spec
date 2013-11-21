@@ -4,8 +4,8 @@
 %global daemon mongod
 
 Name:           %{?scl_prefix}mongodb
-Version:        2.4.6
-Release:        3%{?dist}
+Version:        2.4.8
+Release:        1%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -36,10 +36,6 @@ Patch7:         mongodb-2.4.5-pass-flags.patch
 Patch8:         mongodb-2.4.5-gcc48.patch
 ##Patch 10 - Support atomics on ARM
 Patch10:        mongodb-2.4.5-atomics.patch
-##From: Robie Basak <robie.basak@canonical.com>
-##  Use a signed char to store BSONType enumerations
-##Patch 11 https://jira.mongodb.org/browse/SERVER-9680
-Patch11:        mongodb-2.4.5-signed-char-for-BSONType-enumerations.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
 Requires:       %{?scl_prefix}v8
@@ -138,7 +134,6 @@ software, default configuration files, and init scripts.
 %patch7 -p1
 %patch8 -p1
 %patch10 -p1 -b .atomics
-%patch11 -p1 -b .type
 %patch12 -p1
 
 # copy source files, because we want adjust paths
@@ -152,22 +147,22 @@ sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
       -e 's|(/var/lock)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE1})"
 
-sed -i -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
+sed -i -r -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
       -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
       "$(basename %{SOURCE2})"
 
-sed -i -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
+sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE3})"
 
-sed -i -e 's|/etc/(mongodb.conf)|%{_sysconfdir}\1|g' \
+sed -i -r -e 's|/etc/(mongodb.conf)|%{_sysconfdir}\1|g' \
       "$(basename %{SOURCE4})"
 
-sed -i -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
+sed -i -r -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
       "$(basename %{SOURCE5})"
 
-sed -i -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}\1|g' \
       -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
@@ -357,6 +352,11 @@ fi
 %{_includedir}
 
 %changelog
+* Thu Nov 21 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-1
+- new upstream release
+- fix sed arguments
+- patch cleanup (BSON patch not needed any more)
+
 * Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
 - fix double --quiet option in init script; fix bad sed pattern
 - fix libmongodb bad prefix
