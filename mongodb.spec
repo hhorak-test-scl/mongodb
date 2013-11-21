@@ -79,18 +79,15 @@ A key goal of MongoDB is to bridge the gap between key/value stores (which are
 fast and highly scalable) and traditional RDBMS systems (which are deep in
 functionality).
 
-%package lib
-#%package -n lib%{pkg_name}
+%package -n lib%{pkg_name}
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
 %{?scl:Requires:%scl_runtime}
 
-%description lib
-#%description -n lib%{pkg_name}
+%description -n lib%{pkg_name}
 This package provides the shared library for the MongoDB client.
 
-%package devel
-#%package -n lib%{pkg_name}-devel
+%package -n lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
 Requires:       lib%{pkg_name} = %{version}-%{release}
@@ -99,8 +96,7 @@ Provides:       mongodb-devel = %{version}-%{release}
 Obsoletes:      mongodb-devel < 2.4
 %{?scl:Requires:%scl_runtime}
 
-%description devel
-#%description -n lib%{pkg_name}-devel
+%description -n lib%{pkg_name}-devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
 a high-performance, open source, schema-free document-oriented database.
 
@@ -177,6 +173,12 @@ sed -i 's/\r//' README
 # Put lib dir in correct place
 # https://jira.mongodb.org/browse/SERVER-10049
 sed -i -e "s@\$INSTALL_DIR/lib@\$INSTALL_DIR/%{_lib}@g" src/SConscript.client
+
+#FIXME hack the mongodb build system to provide
+#  /usr/lib64/mysql/libmysqlclient.so.mysql55-18
+#  /usr/lib64/mysql/libmysqlclient.so.mysql55-18.0.0
+#  => here change SConscript.client
+#     in install
 
 %build
 # NOTE: Build flags must be EXACTLY the same in the install step!
@@ -322,9 +324,13 @@ fi
 %{_mandir}/man1/mongostat.1*
 %{_mandir}/man1/mongotop.1*
 
-%files lib
+%files -n lib%{pkg_name}
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
 %{_libdir}/libmongoclient.so
+
+# usually contains ln -s /usr/lib/<???> lib<???>.so
+%files -n lib%{pkg_name}-devel
+%{_includedir}
 
 %files server
 %{_bindir}/mongod
@@ -348,14 +354,12 @@ fi
 %{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
 
-%files devel
-%{_includedir}
-
 %changelog
 * Thu Nov 21 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-1
 - new upstream release
 - fix sed arguments
 - patch cleanup (BSON patch not needed any more)
+- rename lib subpackages to match the scl_prefix-libpkg_name pattern
 
 * Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
 - fix double --quiet option in init script; fix bad sed pattern
