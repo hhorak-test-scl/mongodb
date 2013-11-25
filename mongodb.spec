@@ -1,7 +1,7 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
-
 %global daemon mongod
+%{?__v8_name:%global __v8_prefix %{__v8_name}-}
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.8
@@ -38,22 +38,24 @@ Patch8:         mongodb-2.4.5-gcc48.patch
 Patch10:        mongodb-2.4.5-atomics.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
-Requires:       %{?scl_prefix}v8
+Requires:       %{?__v8_prefix}v8
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  pcre-devel
-BuildRequires:  %{?scl_prefix}v8-devel
+BuildRequires:  %{?__v8_prefix}v8-devel
 BuildRequires:  readline-devel
 BuildRequires:  libpcap-devel
-BuildRequires:  %{?scl_prefix}snappy-devel
 # provides tcmalloc
 BuildRequires:  %{?scl_prefix}gperftools-devel
 # TODO this is no more in the Fedora spec file
 #BuildRequires:  %{?scl_prefix}libunwind-devel
 %if 0%{?rhel} >= 7
 BuildRequires:  systemd
+BuildRequires:  snappy-devel
+%else
+BuildRequires:  %{?scl_prefix}snappy-devel
 %endif
 
 # Mongodb must run on a little-endian CPU (see bug #630898)
@@ -104,7 +106,7 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires(pre):  shadow-utils
-Requires:       %{?scl_prefix}v8
+Requires:       %{?__v8_prefix}v8
 %if 0%{?rhel} >= 7
 Requires(post): systemd
 Requires(preun): systemd
@@ -360,6 +362,8 @@ fi
 - fix sed arguments
 - patch cleanup (BSON patch not needed any more)
 - rename lib subpackages to match the scl_prefix-libpkg_name pattern
+- change v8 dependency to a shared one from external SCL
+- use system pkg for snappy if present (i.e. on RHEL7)
 
 * Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
 - fix double --quiet option in init script; fix bad sed pattern
