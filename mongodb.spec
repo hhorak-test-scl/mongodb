@@ -1,9 +1,7 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
 %global daemon mongod
-#%{?__mongodb_v8_name:%global __mongodb_v8_prefix %{__mongodb_v8_name}-}
-#FIXME temporary solution because of brew delay!
-%{?__mongodb_v8_name:%global __mongodb_v8_prefix %{__v8_name}-}
+%{?__mongodb_v8_name:%global __mongodb_v8_prefix %{__mongodb_v8_name}-}
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.8
