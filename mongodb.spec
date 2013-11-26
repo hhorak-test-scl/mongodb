@@ -132,7 +132,7 @@ software, default configuration files, and init scripts.
 %patch7 -p1
 %patch8 -p1
 %patch10 -p1 -b .atomics
-%patch12 -p1
+%patch12 -p1 -b .paths
 
 # copy source files, because we want adjust paths
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
@@ -140,9 +140,10 @@ cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
       -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}\1|g' \
-      -e 's|/etc/(sysconfig)|%{?_sysconfdir}\1|g' \
+      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}/\1|g' \
+      -e 's|/etc/(sysconfig)|%{?_sysconfdir}/\1|g' \
       -e 's|(/var/lock)|%{?_scl_root}\1|g' \
+      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
       "$(basename %{SOURCE1})"
 
 sed -i -r -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
@@ -154,18 +155,17 @@ sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE3})"
 
-sed -i -r -e 's|/etc/(mongodb.conf)|%{_sysconfdir}\1|g' \
+sed -i -r -e 's|/etc/(mongodb.conf)|%{_sysconfdir}/\1|g' \
       "$(basename %{SOURCE4})"
 
 sed -i -r -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
       "$(basename %{SOURCE5})"
 
 sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}\1|g' \
+      -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}/\1|g' \
       -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-      -e "s|space separated list of scls|$${$(printf '%%s' '%{scl}' |
-        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED-\"%{scl}\"}|g" \
+      -e 's|__space separated list of scls__|$MONGODB24_SCLS_ENABLED|g' \
       "$(basename %{SOURCE6})"
 
 # spurious permissions

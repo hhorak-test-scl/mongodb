@@ -134,6 +134,8 @@ rh_status_q() {
     rh_status >/dev/null 2>&1
 }
 
+source __SCL_SCRIPTS__/service-environment
+source scl_source enable $MONGODB24_SCLS_ENABLED
 
 case "$1" in
     start)
