@@ -1,11 +1,11 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
-
 %global daemon mongod
+%{?__v8_name:%global __v8_prefix %{__v8_name}-}
 
 Name:           %{?scl_prefix}mongodb
-Version:        2.4.6
-Release:        2%{?dist}
+Version:        2.4.8
+Release:        1%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -36,28 +36,26 @@ Patch7:         mongodb-2.4.5-pass-flags.patch
 Patch8:         mongodb-2.4.5-gcc48.patch
 ##Patch 10 - Support atomics on ARM
 Patch10:        mongodb-2.4.5-atomics.patch
-##From: Robie Basak <robie.basak@canonical.com>
-##  Use a signed char to store BSONType enumerations
-##Patch 11 https://jira.mongodb.org/browse/SERVER-9680
-Patch11:        mongodb-2.4.5-signed-char-for-BSONType-enumerations.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
-Requires:       %{?scl_prefix}v8
+Requires:       %{?__v8_prefix}v8
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  pcre-devel
-BuildRequires:  %{?scl_prefix}v8-devel
+BuildRequires:  %{?__v8_prefix}v8-devel
 BuildRequires:  readline-devel
 BuildRequires:  libpcap-devel
-BuildRequires:  %{?scl_prefix}snappy-devel
 # provides tcmalloc
 BuildRequires:  %{?scl_prefix}gperftools-devel
 # TODO this is no more in the Fedora spec file
 #BuildRequires:  %{?scl_prefix}libunwind-devel
 %if 0%{?rhel} >= 7
 BuildRequires:  systemd
+BuildRequires:  snappy-devel
+%else
+BuildRequires:  %{?scl_prefix}snappy-devel
 %endif
 
 # Mongodb must run on a little-endian CPU (see bug #630898)
@@ -83,24 +81,24 @@ A key goal of MongoDB is to bridge the gap between key/value stores (which are
 fast and highly scalable) and traditional RDBMS systems (which are deep in
 functionality).
 
-%package -n lib%{pkg_name}
+%package -n %{scl}-lib%{pkg_name}
 Summary:        MongoDB shared libraries
 Group:          Development/Libraries
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}
+%description -n %{scl}-lib%{pkg_name}
 This package provides the shared library for the MongoDB client.
 
-%package -n lib%{pkg_name}-devel
+%package -n %{scl}-lib%{pkg_name}-devel
 Summary:        MongoDB header files
 Group:          Development/Libraries
-Requires:       lib%{pkg_name} = %{version}-%{release}
+Requires:       %{?scl_prefix}lib%{pkg_name} = %{version}-%{release}
 Requires:       boost-devel
-Provides:       mongodb-devel = %{version}-%{release}
-Obsoletes:      mongodb-devel < 2.4
+Provides:       %{?scl_prefix}%{pkg_name}-devel = %{version}-%{release}
+Obsoletes:      %{?scl_prefix}%{pkg_name}-devel < 2.6
 %{?scl:Requires:%scl_runtime}
 
-%description -n lib%{pkg_name}-devel
+%description -n %{scl}-lib%{pkg_name}-devel
 This package provides the header files and C++ driver for MongoDB. MongoDB is
 a high-performance, open source, schema-free document-oriented database.
 
@@ -108,7 +106,7 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires(pre):  shadow-utils
-Requires:       %{?scl_prefix}v8
+Requires:       %{?__v8_prefix}v8
 %if 0%{?rhel} >= 7
 Requires(post): systemd
 Requires(preun): systemd
@@ -134,37 +132,36 @@ software, default configuration files, and init scripts.
 %patch7 -p1
 %patch8 -p1
 %patch10 -p1 -b .atomics
-%patch11 -p1 -b .type
 %patch12 -p1
 
 # copy source files, because we want adjust paths
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
-sed -i -r -e 's|/usr/bin/|%{_bindir}/|g' \
-      -e 's|(/var/run/mongodb/)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/mongodb/)|%{?_scl_root}\1|g' \
-      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}/\1|g' \
-      -e 's|/etc/(sysconfig/)|%{?_sysconfdir}/\1|g' \
-      -e 's|(/var/lock/)|%{?_scl_root}/\1|g' \
+sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
+      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|/etc/(mongodb.conf)|%{?_sysconfdir}\1|g' \
+      -e 's|/etc/(sysconfig)|%{?_sysconfdir}\1|g' \
+      -e 's|(/var/lock)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE1})"
 
-sed -i -e "s|/var/log/mongodb/|%{?_scl_root}/var/log/mongodb/|g" \
-      -e "s|/var/run/mongodb/|%{?_scl_root}/var/run/mongodb/|g" \
+sed -i -r -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
+      -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
       "$(basename %{SOURCE2})"
 
-sed -i -e 's|/var/lib/mongodb|%{?_scl_root}/var/lib/mongodb|g' \
-      -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/var/log/mongodb|%{?_scl_root}/var/log/mongodb|g' \
+sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
       "$(basename %{SOURCE3})"
 
-sed -i -e 's|/etc/mongodb.conf|%{_sysconfdir}/mongodb.conf|g' \
+sed -i -r -e 's|/etc/(mongodb.conf)|%{_sysconfdir}\1|g' \
       "$(basename %{SOURCE4})"
 
-sed -i -e 's|/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
+sed -i -r -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
       "$(basename %{SOURCE5})"
 
-sed -i -e 's|/var/run/mongodb|%{?_scl_root}/var/run/mongodb|g' \
-      -e 's|/etc/sysconfig/mongod|%{_sysconfdir}/sysconfig/mongod|g' \
+sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}\1|g' \
       -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
       "$(basename %{SOURCE6})"
@@ -178,6 +175,12 @@ sed -i 's/\r//' README
 # Put lib dir in correct place
 # https://jira.mongodb.org/browse/SERVER-10049
 sed -i -e "s@\$INSTALL_DIR/lib@\$INSTALL_DIR/%{_lib}@g" src/SConscript.client
+
+#FIXME hack the mongodb build system to provide
+#  /usr/lib64/mysql/libmysqlclient.so.mysql55-18
+#  /usr/lib64/mysql/libmysqlclient.so.mysql55-18.0.0
+#  => here change SConscript.client
+#     in install
 
 %build
 # NOTE: Build flags must be EXACTLY the same in the install step!
@@ -233,7 +236,7 @@ install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_pre
 # scl-enable wrapper
 install -p -D -m 755 "%{SOURCE7}" %{buildroot}%{_bindir}/scl-service
 %else
-install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_initddir}/%{?scl_prefix}%{daemon}
+install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
 install -p -D -m 644 "$(basename %{SOURCE2})" %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 install -p -D -m 644 "$(basename %{SOURCE3})" %{buildroot}%{_sysconfdir}/mongodb.conf
@@ -323,9 +326,13 @@ fi
 %{_mandir}/man1/mongostat.1*
 %{_mandir}/man1/mongotop.1*
 
-%files -n lib%{pkg_name}
+%files -n %{scl}-lib%{pkg_name}
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
 %{_libdir}/libmongoclient.so
+
+# usually contains ln -s /usr/lib/<???> lib<???>.so
+%files -n %{scl}-lib%{pkg_name}-devel
+%{_includedir}
 
 %files server
 %{_bindir}/mongod
@@ -346,13 +353,24 @@ fi
 # TODO needed until the behaviour of this wrapper is not in upstream
 %{_bindir}/scl-service
 %else
-%{_initddir}/%{?scl_prefix}%{daemon}
+%{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
 
-%files -n lib%{pkg_name}-devel
-%{_includedir}
-
 %changelog
+* Thu Nov 21 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-1
+- new upstream release
+- fix sed arguments
+- patch cleanup (BSON patch not needed any more)
+- rename lib subpackages to match the scl_prefix-libpkg_name pattern
+- change v8 dependency to a shared one from external SCL
+- use system pkg for snappy if present (i.e. on RHEL7)
+
+* Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
+- fix double --quiet option in init script; fix bad sed pattern
+- fix libmongodb bad prefix
+- fix scl-service installation
+- log path mismatches fixed
+
 * Fri Oct 25 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-2
 - make sysconf options being respected
 - fix sourceX files installation in % install
