@@ -164,6 +164,8 @@ sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|/etc/(sysconfig/mongod)|%{_sysconfdir}\1|g' \
       -e 's|/usr/bin/|%{_bindir}/|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+      -e "s|space separated list of scls|$${$(printf '%%s' '%{scl}' |
+        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED-\"%{scl}\"}|g" \
       "$(basename %{SOURCE6})"
 
 # spurious permissions
@@ -364,6 +366,7 @@ fi
 - rename lib subpackages to match the scl_prefix-libpkg_name pattern
 - change v8 dependency to a shared one from external SCL
 - use system pkg for snappy if present (i.e. on RHEL7)
+- auto-generate list of scls in systemd unit file
 
 * Mon Nov 18 2013 Jan Pacner <jpacner@redhat.com> - 2.4.6-3
 - fix double --quiet option in init script; fix bad sed pattern

@@ -8,7 +8,7 @@ User=mongodb
 PIDFile=/var/run/mongodb/mongodb.pid
 EnvironmentFile=__SCL_SCRIPTS__/service-environment
 EnvironmentFile=/etc/sysconfig/mongod
-ExecStart=/usr/bin/scl-service $MONGODB22_MONGOD_SCLS_ENABLED /usr/bin/mongod $OPTIONS run
+ExecStart=/usr/bin/scl-service "space separated list of scls" /usr/bin/mongod $OPTIONS run
 
 [Install]
 WantedBy=multi-user.target
