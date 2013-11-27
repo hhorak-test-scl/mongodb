@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.8
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -273,6 +273,12 @@ exit 0
   /sbin/chkconfig --add %{?scl_prefix}%{daemon}
 %endif
 
+# work-around for RHBZ#924044
+%if 0%{?rhel} < 7
+restorecon -R %{_scl_root} >/dev/null 2>&1 || :
+restorecon -R /var/log/%{scl_prefix}mongodb >/dev/null 2>&1 || :
+restorecon /etc/rc.d/init.d/%{scl_prefix}mongod >/dev/null 2>&1 || :
+%endif
 
 %preun server
 if [ $1 = 0 ] ; then
@@ -359,6 +365,9 @@ fi
 %endif
 
 %changelog
+* Wed Nov 27 2013 Honza Horak <hhorak@redhat.com> - 2.4.8-2
+- Run restore context as work-around for #924044
+
 * Thu Nov 21 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-1
 - new upstream release
 - fix sed arguments
