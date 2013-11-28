@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.8
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -362,6 +362,9 @@ fi
 %endif
 
 %changelog
+* Thu Nov 28 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-3
+- removed scl-source; fixed pid file path
+
 * Wed Nov 27 2013 Honza Horak <hhorak@redhat.com> - 2.4.8-2
 - Run restore context as work-around for #924044
 - remove scl-source (no more needed)
