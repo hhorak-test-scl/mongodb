@@ -21,7 +21,6 @@ Source3:        %{pkg_name}.conf
 Source4:        %{daemon}.sysconf
 Source5:        %{pkg_name}-tmpfile
 Source6:        %{daemon}.service
-Source7:        scl-service
 Patch1:         mongodb-2.4.5-no-term.patch
 ##Patch 2 - make it possible to use system libraries
 Patch2:         mongodb-2.4.5-use-system-version.patch
@@ -237,8 +236,6 @@ mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 mkdir -p %{buildroot}%{_unitdir}
 install -p -D -m 644 "$(basename %{SOURCE5})" %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
 install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
-# scl-enable wrapper
-install -p -D -m 755 "%{SOURCE7}" %{buildroot}%{_bindir}/scl-service
 %else
 install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
@@ -360,8 +357,6 @@ fi
 %if 0%{?rhel} >= 7
 %{_unitdir}/*.service
 %{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
-# TODO needed until the behaviour of this wrapper is not in upstream
-%{_bindir}/scl-service
 %else
 %{_root_initddir}/%{?scl_prefix}%{daemon}
 %endif
@@ -369,6 +364,7 @@ fi
 %changelog
 * Wed Nov 27 2013 Honza Horak <hhorak@redhat.com> - 2.4.8-2
 - Run restore context as work-around for #924044
+- remove scl-source (no more needed)
 
 * Thu Nov 21 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-1
 - new upstream release
