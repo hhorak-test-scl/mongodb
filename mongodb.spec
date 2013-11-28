@@ -274,6 +274,7 @@ exit 0
   /sbin/chkconfig --add %{?scl_prefix}%{daemon}
 %endif
 
+#FIXME use more macros
 # work-around for RHBZ#924044
 %if 0%{?rhel} < 7
 restorecon -R %{_scl_root} >/dev/null 2>&1 || :

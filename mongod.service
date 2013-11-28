@@ -9,6 +9,7 @@ PIDFile=/var/run/mongodb/mongodb.pid
 EnvironmentFile=__SCL_SCRIPTS__/service-environment
 EnvironmentFile=/etc/sysconfig/mongod
 ExecStart=/usr/bin/scl enable __list of scls__ -- /usr/bin/mongod $OPTIONS run
+LimitNOFILE=64000
 
 [Install]
 WantedBy=multi-user.target
