@@ -137,7 +137,7 @@ software, default configuration files, and init scripts.
 # copy source files, because we want adjust paths
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
-sed -i -r -e 's|/usr/bin(/mongod)|%{_bindir}\1|g' \
+sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
       -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
       -e 's|/etc(/mongodb.conf)|%{?_sysconfdir}\1|g' \
@@ -164,7 +164,7 @@ sed -i -r -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
 #FIXME check if the _SCLS_ENABLED var isn't empty!
 sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|/etc(/sysconfig/mongod)|%{_sysconfdir}\1|g' \
-      -e 's|/usr/bin/|%{_bindir}/|g' \
+      -e 's|/usr/bin(/mongod)|%{_bindir}\1|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
       -e "s|__list of scls__|$$$(printf '%%s' '%{scl}' |
         tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
