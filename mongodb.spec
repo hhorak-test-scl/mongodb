@@ -143,6 +143,8 @@ sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
       -e 's|/etc(/sysconfig)|%{?_sysconfdir}\1|g' \
       -e 's|(/var/lock)|%{?_scl_root}\1|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+      -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
+        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
       "$(basename %{SOURCE1})"
 
 sed -i -r -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \

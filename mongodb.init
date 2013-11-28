@@ -134,9 +134,8 @@ rh_status_q() {
     rh_status >/dev/null 2>&1
 }
 
-source __SCL_SCRIPTS__/service-environment
-#FIXME list of scls
-source scl_source enable $MONGODB24_SCLS_ENABLED
+. __SCL_SCRIPTS__/service-environment
+. scl_source enable __list of scls__
 
 case "$1" in
     start)
