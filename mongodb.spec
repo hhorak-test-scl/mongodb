@@ -165,10 +165,9 @@ sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
       -e 's|/etc(/sysconfig/mongod)|%{_sysconfdir}\1|g' \
       -e 's|/usr/bin(/mongod)|%{_bindir}\1|g' \
       -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-      -e 's|__list of scls__|$MONGODB24_SCLS_ENABLED|g' \
+      -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
+        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
       "$(basename %{SOURCE6})"
-#      -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
-#        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
 
 # spurious permissions
 chmod -x README
