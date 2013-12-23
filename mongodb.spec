@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.8
-Release:        3%{?dist}
+Release:        5%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -138,7 +138,7 @@ cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
 
 sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
       -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
       -e 's|/etc(/mongodb.conf)|%{?_sysconfdir}\1|g' \
       -e 's|/etc(/sysconfig)|%{?_sysconfdir}\1|g' \
       -e 's|(/var/lock)|%{?_scl_root}\1|g' \
@@ -147,13 +147,13 @@ sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
         tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
       "$(basename %{SOURCE1})"
 
-sed -i -r -e "s|(/var/log/mongodb)|%{?_scl_root}\1|g" \
+sed -i -r -e "s|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g" \
       -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
       "$(basename %{SOURCE2})"
 
 sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
       -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/mongodb)|%{?_scl_root}\1|g' \
+      -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
       "$(basename %{SOURCE3})"
 
 sed -i -r -e 's|/etc(/mongodb.conf)|%{_sysconfdir}\1|g' \
@@ -180,6 +180,14 @@ sed -i 's/\r//' README
 # Put lib dir in correct place
 # https://jira.mongodb.org/browse/SERVER-10049
 sed -i -e "s@\$INSTALL_DIR/lib@\$INSTALL_DIR/%{_lib}@g" src/SConscript.client
+
+# prefix client library with %{scl_prefix}%{version}
+(pre='EnsureSConsVersion(2, 3, 0)'
+post='sharedLibEnv.AppendUnique(SHLIBVERSION="%{?scl_prefix}%{version}")'
+sed -i -r \
+  -e "s|([[:space:]]*)(sharedLibEnv *= *env.Clone.*)|\1$pre\n\1\2\n\1$post|" \
+  -e "s|(sharedLibEnv.)Install *\(|\1InstallVersionedLib(|" \
+  src/SConscript.client)
 
 #FIXME hack the mongodb build system to provide
 #  /usr/lib64/mysql/libmysqlclient.so.mysql55-18
@@ -230,7 +238,7 @@ rm -f %{buildroot}%{_libdir}/../lib/libmongoclient.a
 # TODO EPEL 4 & 5 expands to %{_prefix}/com, otherwise to /var/lib
 #mkdir -p %{buildroot}%{_sharedstatedir}/%{pkg_name}
 mkdir -p %{buildroot}%{_localstatedir}/lib/%{pkg_name}
-mkdir -p %{buildroot}%{_localstatedir}/log/%{pkg_name}
+mkdir -p %{buildroot}%{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name}
 mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
@@ -274,12 +282,11 @@ exit 0
   /sbin/chkconfig --add %{?scl_prefix}%{daemon}
 %endif
 
-#FIXME use more macros
 # work-around for RHBZ#924044
 %if 0%{?rhel} < 7
 restorecon -R %{_scl_root} >/dev/null 2>&1 || :
-restorecon -R /var/log/%{scl_prefix}mongodb >/dev/null 2>&1 || :
-restorecon /etc/rc.d/init.d/%{scl_prefix}mongod >/dev/null 2>&1 || :
+restorecon -R %{_root_localstatedir}/log/%{?scl_prefix}mongodb >/dev/null 2>&1 || :
+restorecon %{_root_initddir}/%{?scl_prefix}mongod >/dev/null 2>&1 || :
 %endif
 
 %preun server
@@ -338,7 +345,7 @@ fi
 
 %files -n %{scl}-lib%{pkg_name}
 %doc README GNU-AGPL-3.0.txt APACHE-2.0.txt
-%{_libdir}/libmongoclient.so
+%{_libdir}/libmongoclient.so.%{?scl_prefix}%{version}
 
 # usually contains ln -s /usr/lib/<???> lib<???>.so
 %files -n %{scl}-lib%{pkg_name}-devel
@@ -352,7 +359,7 @@ fi
 # TODO
 #%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/log/%{pkg_name}
+%dir %attr(0755, %{pkg_name}, root) %{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name}
 %dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
 %config(noreplace) %{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
@@ -365,6 +372,13 @@ fi
 %endif
 
 %changelog
+* Thu Dec 19 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-5
+- Related: #1042874 (non-namespaced RPM provides and libraries)
+
+* Tue Dec 17 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-4
+- Resolves: #1039038 (additional forking of mongod)
+- change log placement to be consistent with other SCLs
+
 * Thu Nov 28 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-3
 - removed scl-source; fixed pid file path
 

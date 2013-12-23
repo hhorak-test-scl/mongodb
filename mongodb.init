@@ -96,7 +96,9 @@ killproc_nice() {
 start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
-    daemon --pidfile=${pidfile} --user mongodb "$exec $options run >> $logfile 2>&1 &"
+    # FIXME check mongod source - if parent waits after forking for childs message
+    #   about proper initialization
+    daemon --pidfile=${pidfile} --user mongodb "$exec $options run >> $logfile 2>&1"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile
