@@ -4,8 +4,8 @@
 %{?__mongodb_v8_name:%global __mongodb_v8_prefix %{__mongodb_v8_name}-}
 
 Name:           %{?scl_prefix}mongodb
-Version:        2.4.8
-Release:        5%{?dist}
+Version:        2.4.9
+Release:        1%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -372,6 +372,13 @@ fi
 %endif
 
 %changelog
+* Wed Jan 15 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9
+- Resolves: RHBZ#1051746 (update to mongodb-2.4.9)
+
+* Mon Jan 13 2014 Honza Horák <hhorak@redhat.com> - 2.4.8-6
+- Rebild for prefixed libsnappy
+  Related: RHBZ#1049403
+
 * Thu Dec 19 2013 Jan Pacner <jpacner@redhat.com> - 2.4.8-5
 - Related: #1042874 (non-namespaced RPM provides and libraries)
 
