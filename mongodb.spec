@@ -5,7 +5,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -372,6 +372,10 @@ fi
 %endif
 
 %changelog
+* Fri Jan 17 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-2
+- Rebuild for gperftools
+  Related: #1039927
+
 * Wed Jan 15 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9
 - Resolves: RHBZ#1051746 (update to mongodb-2.4.9)
 
