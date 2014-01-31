@@ -1,11 +1,13 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
 %global daemon mongod
-%{?__mongodb_v8_name:%global __mongodb_v8_prefix %{__mongodb_v8_name}-}
+# this macro is provided by the SCL meta package`s subpackage "SCL-scldevel"
+# and injected into build-root automagically by relengs
+%{?scl_v8_mongodb:%global scl_v8_mongodb_prefix %{scl_v8_mongodb}-}
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -37,13 +39,13 @@ Patch8:         mongodb-2.4.5-gcc48.patch
 Patch10:        mongodb-2.4.5-atomics.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
-Requires:       %{?__mongodb_v8_prefix}v8
+Requires:       %{?scl_v8_mongodb_prefix}v8
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  pcre-devel
-BuildRequires:  %{?__mongodb_v8_prefix}v8-devel
+BuildRequires:  %{?scl_v8_mongodb_prefix}v8-devel
 BuildRequires:  readline-devel
 BuildRequires:  libpcap-devel
 # provides tcmalloc
@@ -105,7 +107,7 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires(pre):  shadow-utils
-Requires:       %{?__mongodb_v8_prefix}v8
+Requires:       %{?scl_v8_mongodb_prefix}v8
 %if 0%{?rhel} >= 7
 Requires(post): systemd
 Requires(preun): systemd
@@ -357,10 +359,10 @@ fi
 %{_mandir}/man1/mongod.1*
 %{_mandir}/man1/mongos.1*
 # TODO
-#%dir %attr(0755, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name}
-%dir %attr(0755, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
+#%dir %attr(0750, %{pkg_name}, root) %{_sharedstatedir}/%{pkg_name}
+%dir %attr(0750, %{pkg_name}, root) %{_localstatedir}/lib/%{pkg_name}
+%dir %attr(0750, %{pkg_name}, root) %{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name}
+%dir %attr(0750, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
 %config(noreplace) %{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
 %config(noreplace) %{_sysconfdir}/mongodb.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
@@ -372,6 +374,10 @@ fi
 %endif
 
 %changelog
+* Mon Jan 20 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-3
+- Related: #1055555 (add -scldevel subpackage for shipped build-requires garbage)
+- fix installed dirs permissions
+
 * Fri Jan 17 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-2
 - Rebuild for gperftools
   Related: #1039927
