@@ -7,7 +7,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -374,6 +374,10 @@ fi
 %endif
 
 %changelog
+* Mon Feb 17 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-4
+- Rebase due libunwind soname prefix
+  Related: #1042874
+
 * Mon Jan 20 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-3
 - Related: #1055555 (add -scldevel subpackage for shipped build-requires garbage)
 - fix installed dirs permissions
