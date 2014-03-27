@@ -1,7 +1,5 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
-%global daemon mongod
-%global daemon_shard mongos
 # this macro is provided by the SCL meta package`s subpackage "SCL-scldevel"
 # and injected into build-root automagically by relengs
 %{?scl_v8_mongodb:%global scl_v8_mongodb_prefix %{scl_v8_mongodb}-}
