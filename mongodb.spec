@@ -1,13 +1,14 @@
 %{?scl:%scl_package mongodb}
 %global pkg_name mongodb
 %global daemon mongod
+%global daemon_shard mongos
 # this macro is provided by the SCL meta package`s subpackage "SCL-scldevel"
 # and injected into build-root automagically by relengs
 %{?scl_v8_mongodb:%global scl_v8_mongodb_prefix %{scl_v8_mongodb}-}
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        4%{?dist}
+Release:        6%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -17,12 +18,17 @@ License:        AGPLv3 and zlib and ASL 2.0
 URL:            http://www.mongodb.org
 
 Source0:        http://fastdl.mongodb.org/src/%{pkg_name}-src-r%{version}.tar.gz
-Source1:        %{pkg_name}.init
+Source1:        %{pkg_name}-tmpfile
 Source2:        %{pkg_name}.logrotate
 Source3:        %{pkg_name}.conf
-Source4:        %{daemon}.sysconf
-Source5:        %{pkg_name}-tmpfile
-Source6:        %{daemon}.service
+Source4:        %{pkg_name}.init
+Source5:        %{pkg_name}.service
+Source6:        %{pkg_name}.sysconf
+Source7:        %{pkg_name}-shard.conf
+Source8:        %{pkg_name}-shard.init
+Source9:        %{pkg_name}-shard.service
+Source10:       %{pkg_name}-shard.sysconf
+
 Patch1:         mongodb-2.4.5-no-term.patch
 ##Patch 2 - make it possible to use system libraries
 Patch2:         mongodb-2.4.5-use-system-version.patch
@@ -135,43 +141,52 @@ software, default configuration files, and init scripts.
 %patch10 -p1 -b .atomics
 %patch12 -p1 -b .paths
 
-# copy source files, because we want adjust paths
-cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} ./
+# copy them (we will change their content)
+cp %{SOURCE1} %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} \
+  %{SOURCE6} %{SOURCE7} %{SOURCE8} %{SOURCE9} %{SOURCE10} ./
 
-sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
-      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
-      -e 's|/etc(/mongodb.conf)|%{?_sysconfdir}\1|g' \
-      -e 's|/etc(/sysconfig)|%{?_sysconfdir}\1|g' \
-      -e 's|(/var/lock)|%{?_scl_root}\1|g' \
-      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-      -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
-        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
-      "$(basename %{SOURCE1})"
+for f in %{SOURCE4} %{SOURCE8}; do
+  sed -i -r -e 's|/usr/bin|%{_bindir}|g' \
+    -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+    -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
+    -e 's|/etc(/mongodb(-shard)?\.conf)|%{?_sysconfdir}\1|g' \
+    -e 's|/etc(/sysconfig)|%{?_sysconfdir}\1|g' \
+    -e 's|(/var/lock)|%{?_scl_root}\1|g' \
+    -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+    -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
+    tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
+      "$(basename "$f")"
+done
 
 sed -i -r -e "s|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g" \
-      -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
-      "$(basename %{SOURCE2})"
+  -e "s|(/var/run/mongodb)|%{?_scl_root}\1|g" \
+  "$(basename %{SOURCE2})"
 
-sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
-      "$(basename %{SOURCE3})"
+for f in %{SOURCE3} %{SOURCE7}; do
+  sed -i -r -e 's|(/var/lib/mongodb)|%{?_scl_root}\1|g' \
+    -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+    -e 's|(/var/log/)(mongodb)|\1%{?scl_prefix}\2|g' \
+    "$(basename "$f")"
+done
 
-sed -i -r -e 's|/etc(/mongodb.conf)|%{_sysconfdir}\1|g' \
-      "$(basename %{SOURCE4})"
+for f in %{SOURCE6} %{SOURCE10}; do
+  sed -i -r -e 's|/etc(/mongodb(-shard)?\.conf)|%{_sysconfdir}\1|g' \
+    "$(basename "$f")"
+done
 
 sed -i -r -e 's|(/run/mongodb)|%{?_scl_root}/var/\1|g' \
-      "$(basename %{SOURCE5})"
+  "$(basename %{SOURCE1})"
 
-#FIXME check if the _SCLS_ENABLED var isn't empty!
-sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
-      -e 's|/etc(/sysconfig/mongod)|%{_sysconfdir}\1|g' \
-      -e 's|/usr/bin(/mongod)|%{_bindir}\1|g' \
-      -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
-      -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
-        tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
-      "$(basename %{SOURCE6})"
+for f in %{SOURCE5} %{SOURCE9}; do
+  #FIXME check if the _SCLS_ENABLED var isn't empty!
+  sed -i -r -e 's|(/var/run/mongodb)|%{?_scl_root}\1|g' \
+    -e 's|/etc(/sysconfig/mongodb)|%{_sysconfdir}\1|g' \
+    -e 's|/usr/bin(/mongo[ds])|%{_bindir}\1|g' \
+    -e 's|__SCL_SCRIPTS__|%{?_scl_scripts}|g' \
+    -e "s|__list of scls__|\$$(printf '%%s' '%{scl}' |
+    tr '[:lower:][:space:]' '[:upper:]_')_SCLS_ENABLED|g" \
+      "$(basename "$f")"
+done
 
 # spurious permissions
 chmod -x README
@@ -246,14 +261,18 @@ mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
 %if 0%{?rhel} >= 7
 mkdir -p %{buildroot}%{_unitdir}
-install -p -D -m 644 "$(basename %{SOURCE5})" %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
-install -p -D -m 644 "$(basename %{SOURCE6})" %{buildroot}%{_unitdir}/%{?scl_prefix}%{daemon}.service
+install -p -D -m 644 "$(basename %{SOURCE1})"  %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}%{pkg_name}.conf
+install -p -D -m 644 "$(basename %{SOURCE5})"  %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}.service
+install -p -D -m 644 "$(basename %{SOURCE9})"  %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}-shard.service
 %else
-install -p -D -m 755 "$(basename %{SOURCE1})" %{buildroot}%{_root_initddir}/%{?scl_prefix}%{daemon}
+install -p -D -m 755 "$(basename %{SOURCE4})"  %{buildroot}%{_root_initddir}/%{?scl_prefix}%{pkg_name}
+install -p -D -m 755 "$(basename %{SOURCE8})"  %{buildroot}%{_root_initddir}/%{?scl_prefix}%{pkg_name}-shard
 %endif
-install -p -D -m 644 "$(basename %{SOURCE2})" %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
-install -p -D -m 644 "$(basename %{SOURCE3})" %{buildroot}%{_sysconfdir}/mongodb.conf
-install -p -D -m 644 "$(basename %{SOURCE4})" %{buildroot}%{_sysconfdir}/sysconfig/%{daemon}
+install -p -D -m 644 "$(basename %{SOURCE2})"  %{buildroot}%{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
+install -p -D -m 644 "$(basename %{SOURCE3})"  %{buildroot}%{_sysconfdir}/%{pkg_name}.conf
+install -p -D -m 644 "$(basename %{SOURCE7})"  %{buildroot}%{_sysconfdir}/%{pkg_name}-shard.conf
+install -p -D -m 644 "$(basename %{SOURCE6})"  %{buildroot}%{_sysconfdir}/sysconfig/%{pkg_name}
+install -p -D -m 644 "$(basename %{SOURCE10})" %{buildroot}%{_sysconfdir}/sysconfig/%{pkg_name}-shard
 
 mkdir -p %{buildroot}%{_mandir}/man1
 cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
@@ -277,28 +296,40 @@ exit 0
 %post server
 %if 0%{?rhel} >= 7
   # https://fedoraproject.org/wiki/Packaging:ScriptletSnippets#Systemd
-  %tmpfiles_create %{?scl_prefix}mongodb.conf
+  %tmpfiles_create %{?scl_prefix}%{pkg_name}.conf
   # daemon-reload
   %systemd_postun
 %else
-  /sbin/chkconfig --add %{?scl_prefix}%{daemon}
+  /sbin/chkconfig --add %{?scl_prefix}%{pkg_name}
+  /sbin/chkconfig --add %{?scl_prefix}%{pkg_name}-shard
 %endif
 
 # work-around for RHBZ#924044
 %if 0%{?rhel} < 7
 restorecon -R %{_scl_root} >/dev/null 2>&1 || :
-restorecon -R %{_root_localstatedir}/log/%{?scl_prefix}mongodb >/dev/null 2>&1 || :
-restorecon %{_root_initddir}/%{?scl_prefix}mongod >/dev/null 2>&1 || :
+restorecon -R %{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name} >/dev/null 2>&1 || :
+restorecon %{_root_initddir}/%{?scl_prefix}%{pkg_name}       >/dev/null 2>&1 || :
+restorecon %{_root_initddir}/%{?scl_prefix}%{pkg_name}-shard >/dev/null 2>&1 || :
 %endif
 
+# FIXME set the SELinux context up and make it permanent
+#chcon --reference /tmp /var/lib/%{pkg_name}/tmp
+#chcon --reference /var/lib/%{pkg_name} tmp
+##/usr/sbin/semanage fcontext -a -t mongod_db_t "/var/lib/%{pkg_name}/tmp(/.*)?"
+# FIXME wtf?
+#restorecon -R -v /var/lib/mysql
+
 %preun server
-if [ $1 = 0 ] ; then
+if [ "$1" = 0 ]; then
 %if 0%{?rhel} >= 7
   # --no-reload disable; stop
-  %systemd_preun %{?scl_prefix}%{daemon}.service
+  %systemd_preun %{?scl_prefix}%{pkg_name}.service
+  %systemd_preun %{?scl_prefix}%{pkg_name}-shard.service
 %else
-  /sbin/service %{?scl_prefix}%{daemon} stop >/dev/null 2>&1
-  /sbin/chkconfig --del %{?scl_prefix}%{daemon}
+  /sbin/service %{?scl_prefix}%{pkg_name}       stop >/dev/null 2>&1
+  /sbin/service %{?scl_prefix}%{pkg_name}-shard stop >/dev/null 2>&1
+  /sbin/chkconfig --del %{?scl_prefix}%{pkg_name}
+  /sbin/chkconfig --del %{?scl_prefix}%{pkg_name}-shard
 %endif
 fi
 
@@ -308,12 +339,14 @@ fi
   # daemon-reload
   %systemd_postun
 %endif
-if [ "$1" -ge "1" ] ; then
+if [ "$1" -ge 1 ]; then
 %if 0%{?rhel} >= 7
   # try-restart
-  %systemd_postun_with_restart %{?scl_prefix}%{daemon}.service
+  %systemd_postun_with_restart %{?scl_prefix}%{pkg_name}.service
+  %systemd_postun_with_restart %{?scl_prefix}%{pkg_name}-shard.service
 %else
-  /sbin/service %{?scl_prefix}%{daemon} condrestart >/dev/null 2>&1 || :
+  /sbin/service %{?scl_prefix}%{pkg_name}       condrestart >/dev/null 2>&1 || :
+  /sbin/service %{?scl_prefix}%{pkg_name}-shard condrestart >/dev/null 2>&1 || :
 %endif
 fi
 
@@ -364,16 +397,26 @@ fi
 %dir %attr(0750, %{pkg_name}, root) %{_root_localstatedir}/log/%{?scl_prefix}%{pkg_name}
 %dir %attr(0750, %{pkg_name}, root) %{_localstatedir}/run/%{pkg_name}
 %config(noreplace) %{?scl:%_root_sysconfdir}%{!?scl:%_sysconfdir}/logrotate.d/%{?scl_prefix}%{pkg_name}
-%config(noreplace) %{_sysconfdir}/mongodb.conf
-%config(noreplace) %{_sysconfdir}/sysconfig/%{daemon}
+%config(noreplace) %{_sysconfdir}/%{pkg_name}.conf
+%config(noreplace) %{_sysconfdir}/%{pkg_name}-shard.conf
+%config(noreplace) %{_sysconfdir}/sysconfig/%{pkg_name}
+%config(noreplace) %{_sysconfdir}/sysconfig/%{pkg_name}-shard
 %if 0%{?rhel} >= 7
 %{_unitdir}/*.service
-%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}mongodb.conf
+%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}%{pkg_name}.conf
 %else
-%{_root_initddir}/%{?scl_prefix}%{daemon}
+%{_root_initddir}/%{?scl_prefix}%{pkg_name}
+%{_root_initddir}/%{?scl_prefix}%{pkg_name}-shard
 %endif
 
 %changelog
+* Wed Mar 26 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-6
+- Related: #1075736 (initscript doesnt respect LSB; redo the fix)
+- Resolves: #1057097 (Use the same name for daemon and log file)
+
+* Tue Mar 25 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-5
+- Resolves: #1075736 (initscript doesnt respect LSB)
+
 * Mon Feb 17 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-4
 - Rebase due libunwind soname prefix
   Related: #1042874

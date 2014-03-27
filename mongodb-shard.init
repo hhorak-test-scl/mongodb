@@ -9,13 +9,13 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-exec="/usr/bin/mongod"
-prog="mongod"
-logfile="/var/log/mongodb/mongodb.log"
+exec="/usr/bin/mongos"
+prog="mongos"
+logfile="/var/log/mongodb/mongodb-shard.log"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
-pidfile=${PIDFILE-/var/run/mongodb/mongodb.pid}
+pidfile=${PIDFILE-/var/run/mongodb/mongodb-shard.pid}
 options="$OPTIONS"
 lockfile="/var/lock/subsys/$prog"
 

@@ -7,6 +7,8 @@
        notifempty
        missingok
        postrotate
-          /bin/kill -USR1 `cat /var/run/mongodb/mongodb.pid 2>/dev/null` 2> /dev/null|| true
+          for f in /var/run/mongodb/mongodb*.pid; do \
+            /bin/kill -USR1 $(<$f) 2>/dev/null || true \
+          done
        endscript
 }
