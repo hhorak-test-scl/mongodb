@@ -6,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        6%{?dist}
+Release:        5%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -43,7 +43,7 @@ Patch8:         mongodb-2.4.5-gcc48.patch
 Patch10:        mongodb-2.4.5-atomics.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
-Requires:       %{?scl_v8_mongodb_prefix}v8
+Requires:       %{?scl_v8_mongodb_prefix}v8-runtime
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
@@ -111,7 +111,7 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires(pre):  shadow-utils
-Requires:       %{?scl_v8_mongodb_prefix}v8
+Requires:       %{?scl_v8_mongodb_prefix}v8-runtime
 %if 0%{?rhel} >= 7
 Requires(post): systemd
 Requires(preun): systemd
@@ -258,7 +258,6 @@ mkdir -p %{buildroot}%{_localstatedir}/run/%{pkg_name}
 mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 
 %if 0%{?rhel} >= 7
-mkdir -p %{buildroot}%{_unitdir}
 install -p -D -m 644 "$(basename %{SOURCE1})"  %{buildroot}%{_libdir}/../lib/tmpfiles.d/%{?scl_prefix}%{pkg_name}.conf
 install -p -D -m 644 "$(basename %{SOURCE5})"  %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}.service
 install -p -D -m 644 "$(basename %{SOURCE9})"  %{buildroot}%{_unitdir}/%{?scl_prefix}%{pkg_name}-shard.service
@@ -272,8 +271,8 @@ install -p -D -m 644 "$(basename %{SOURCE7})"  %{buildroot}%{_sysconfdir}/%{pkg_
 install -p -D -m 644 "$(basename %{SOURCE6})"  %{buildroot}%{_sysconfdir}/sysconfig/%{pkg_name}
 install -p -D -m 644 "$(basename %{SOURCE10})" %{buildroot}%{_sysconfdir}/sysconfig/%{pkg_name}-shard
 
-mkdir -p %{buildroot}%{_mandir}/man1
-cp -p debian/*.1 %{buildroot}%{_mandir}/man1/
+install -d -m 755            %{buildroot}%{_mandir}/man1
+install -p -m 644 debian/*.1 %{buildroot}%{_mandir}/man1/
 
 
 %post -p /sbin/ldconfig
@@ -408,12 +407,11 @@ fi
 %endif
 
 %changelog
-* Wed Mar 26 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-6
-- Related: #1075736 (initscript doesnt respect LSB; redo the fix)
-- Resolves: #1057097 (Use the same name for daemon and log file)
-
 * Tue Mar 25 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-5
 - Resolves: #1075736 (initscript doesnt respect LSB)
+- Resolves: #1057097 (Use the same name for daemon and log file)
+- Resolves: #1075688 (metapackage shouldnt depend on another metapackage)
+- Resolves: #1075025 (Leftovers files after mongodb packages removal)
 
 * Mon Feb 17 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-4
 - Rebase due libunwind soname prefix
