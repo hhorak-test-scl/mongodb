@@ -1,1 +1,1 @@
-OPTIONS="--quiet -f /etc/mongodb-shard.conf"
+OPTIONS="-f /etc/mongodb-shard.conf"

@@ -10,7 +10,7 @@
 . /etc/rc.d/init.d/functions
 
 exec="/usr/bin/mongos"
-prog="mongos"
+prog="mongodb-shard"
 logfile="/var/log/mongodb/mongodb-shard.log"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
@@ -101,7 +101,7 @@ start() {
     # FIXME check mongod source - if parent waits after forking for childs
     #   message about proper initialization
     daemon --pidfile="$pidfile" --user mongodb \
-            "$exec $options run >> $logfile 2>&1"
+            "$exec $options >> $logfile 2>&1"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile

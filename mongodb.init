@@ -10,7 +10,7 @@
 . /etc/rc.d/init.d/functions
 
 exec="/usr/bin/mongod"
-prog="mongod"
+prog="mongodb"
 logfile="/var/log/mongodb/mongodb.log"
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
