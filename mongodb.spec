@@ -6,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -43,7 +43,7 @@ Patch8:         mongodb-2.4.5-gcc48.patch
 Patch10:        mongodb-2.4.5-atomics.patch
 Patch12:        mongodb-2.4.6-use-ld-library-path.patch
 
-Requires:       %{?scl_v8_mongodb_prefix}v8-runtime
+Requires:       %{?scl_v8_mongodb_prefix}v8
 BuildRequires:  python-devel
 BuildRequires:  %{?scl_prefix}scons
 BuildRequires:  openssl-devel
@@ -111,7 +111,7 @@ a high-performance, open source, schema-free document-oriented database.
 Summary:        MongoDB server, sharding server and support scripts
 Group:          Applications/Databases
 Requires(pre):  shadow-utils
-Requires:       %{?scl_v8_mongodb_prefix}v8-runtime
+Requires:       %{?scl_v8_mongodb_prefix}v8
 %if 0%{?rhel} >= 7
 Requires(post): systemd
 Requires(preun): systemd
@@ -407,6 +407,10 @@ fi
 %endif
 
 %changelog
+* Mon Mar 31 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-6
+- Require existing package
+  Related: #1075688
+
 * Tue Mar 25 2014 Jan Pacner <jpacner@redhat.com> - 2.4.9-5
 - Resolves: #1075736 (initscript doesnt respect LSB)
 - Resolves: #1057097 (Use the same name for daemon and log file)
