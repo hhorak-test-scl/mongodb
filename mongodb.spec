@@ -6,7 +6,7 @@
 
 Name:           %{?scl_prefix}mongodb
 Version:        2.4.9
-Release:        7%{?dist}
+Release:        8%{?dist}
 Summary:        High-performance, schema-free document-oriented database
 Group:          Applications/Databases
 License:        AGPLv3 and zlib and ASL 2.0
@@ -407,6 +407,10 @@ fi
 %endif
 
 %changelog
+* Mon Mar 31 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-8
+- Fix unix socket path in config file
+  Related: #1057097
+
 * Mon Mar 31 2014 Honza Horak <hhorak@redhat.com> - 2.4.9-7
 - Fix configuration of shard server so it is at least run-able
   Related: #1057097
